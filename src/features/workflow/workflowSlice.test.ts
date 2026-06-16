@@ -36,3 +36,13 @@ test("setWorkflow replaces state from a dto", () => {
   expect(next.nodes).toHaveLength(1);
   expect(next.nodes[0]!.id).toBe("start");
 });
+
+test("addNode places the node at the given position when provided", () => {
+  const next = reducer(empty, addNode({ type: "start", position: { x: 42, y: 99 } }));
+  expect(next.nodes[0]!.position).toEqual({ x: 42, y: 99 });
+});
+
+test("addNode falls back to the default position when omitted", () => {
+  const next = reducer(empty, addNode({ type: "start" }));
+  expect(next.nodes[0]!.position).toEqual({ x: 200, y: 200 });
+});

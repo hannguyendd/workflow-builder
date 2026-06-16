@@ -63,12 +63,12 @@ const slice = createSlice({
       };
       state.edges = addEdge(edge, state.edges);
     },
-    addNode(state, action: PayloadAction<{ type: string }>) {
-      const { type } = action.payload;
+    addNode(state, action: PayloadAction<{ type: string; position?: { x: number; y: number } }>) {
+      const { type, position } = action.payload;
       state.nodes.push({
         id: uniqueId(type, state.nodes),
         type,
-        position: { x: 200, y: 200 },
+        position: position ?? { x: 200, y: 200 },
         data: nodeData(type),
       });
     },
