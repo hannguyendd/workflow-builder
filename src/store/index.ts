@@ -1,9 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import workflowReducer from "@/features/workflow/workflowSlice";
+import themeReducer from "@/features/theme/themeSlice";
 
 export const store = configureStore({
   reducer: {
     workflow: workflowReducer,
+    theme: themeReducer,
   },
 });
 
