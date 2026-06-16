@@ -29,14 +29,19 @@ There is no separate lint/typecheck script; run `bunx tsc --noEmit` for a type c
 This is a **Bun-native fullstack app** — one `Bun.serve()` process serves both the JSON API and the React SPA. There is no Vite/webpack/express; Bun's bundler handles everything.
 
 - **`src/index.ts`** — the only server. Defines API routes inline in the `routes` object (e.g. `/api/hello`, `/api/hello/:name`) and a catch-all `/*` that serves `index.html` for the SPA. `development.hmr`/`console` are enabled only when `NODE_ENV !== "production"`.
-- **`src/index.html`** — imported *directly* as a module into `index.ts`. Bun bundles its `<script src="./frontend.tsx">` and any CSS/asset imports automatically. This HTML import is the bridge between server and client.
+- **`src/index.html`** — imported _directly_ as a module into `index.ts`. Bun bundles its `<script src="./frontend.tsx">` and any CSS/asset imports automatically. This HTML import is the bridge between server and client.
 - **`src/frontend.tsx`** — client entrypoint. Mounts `<App>` into `#root`. Note the HMR pattern: `import.meta.hot.data.root ??= createRoot(elem)` preserves the React root across hot reloads instead of remounting.
 - **`src/App.tsx` → `src/APITester.tsx`** — UI. `APITester` is a demo form that `fetch`es the `/api/hello` routes; useful as the reference for how the client calls the server.
 - **`build.ts`** — production build. Globs `src/**/*.html`, clears `dist/`, and bundles minified with linked sourcemaps for `target: "browser"`. New pages = new `.html` files under `src/`; they're picked up automatically.
 
 **Tailwind v4** is wired in two places that must stay in sync: `bunfig.toml` (`[serve.static].plugins`) for the dev server, and `build.ts` (`plugins: [tailwind]`) for production. Styles are imported via `src/index.css` from `App.tsx`.
 
-Path alias: `@/*` → `./src/*` (see `tsconfig.json`). Client-exposed env vars use the `BUN_PUBLIC_*` prefix.
+Path alias: `@/*` → `./src/*`, plus `@features/*`, `@services/*`, `@store/*`, `@types/*` (see `tsconfig.json`). Client-exposed env vars use the `BUN_PUBLIC_*` prefix.
+
+## Code conventions
+
+- **No magic strings or numbers.** Extract literals into named constants (or enums/`as const` maps) instead of inlining them. Repeated or meaningful values must have a named constant.
+- **Prefer alias imports over relative paths.** Use `@/*`, `@features/*`, `@services/*`, `@store/*`, `@types/*` instead of `../../`-style relative imports.
 
 ## Bun conventions (project default — use Bun, not Node tooling)
 
