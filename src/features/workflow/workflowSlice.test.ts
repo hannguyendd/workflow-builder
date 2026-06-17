@@ -1,6 +1,7 @@
 import { test, expect } from "bun:test";
-import reducer, { addNode, connected, setWorkflow } from "./workflowSlice";
-import type { WorkflowDto } from "@/types/workflow";
+import reducer, { addNode, connected, setWorkflow, updateNodeData } from "./workflowSlice";
+import { defaultCondition } from "./condition/jsonLogic";
+import type { WorkflowDto, WorkflowNodeData } from "@/types/workflow";
 
 const empty = { meta: { name: "x", description: "", parameterSchema: {} }, nodes: [], edges: [] };
 
@@ -45,4 +46,38 @@ test("addNode places the node at the given position when provided", () => {
 test("addNode falls back to the default position when omitted", () => {
   const next = reducer(empty, addNode({ type: "start" }));
   expect(next.nodes[0]!.position).toEqual({ x: 200, y: 200 });
+});
+
+test("addNode('if') seeds a default condition", () => {
+  const state = reducer(undefined, addNode({ type: "if" }));
+  const ifNode = state.nodes.find((n) => n.type === "if");
+  expect(ifNode).toBeDefined();
+  expect((ifNode!.data as WorkflowNodeData).parameters).toEqual({ condition: defaultCondition() });
+});
+
+test("connected derives the edge label from the source handle", () => {
+  const base = reducer(undefined, addNode({ type: "if" }));
+  const next = reducer(
+    base,
+    connected({ source: "if", target: "end", sourceHandle: "true", targetHandle: null }),
+  );
+  const edge = next.edges.find((e) => e.source === "if" && e.target === "end");
+  expect(edge?.label).toBe("true");
+  expect(edge?.id).toBe("if->end:true");
+});
+
+test("connected falls back to 'main' when there is no source handle", () => {
+  const base = reducer(undefined, addNode({ type: "if" }));
+  const next = reducer(
+    base,
+    connected({ source: "start", target: "end", sourceHandle: null, targetHandle: null }),
+  );
+  expect(next.edges.find((e) => e.source === "start")?.label).toBe("main");
+});
+
+test("updateNodeData merges into the node's data", () => {
+  const base = reducer(undefined, addNode({ type: "if" }));
+  const next = reducer(base, updateNodeData({ id: "if", data: { description: "branch on age" } }));
+  const node = next.nodes.find((n) => n.id === "if");
+  expect((node!.data as WorkflowNodeData).description).toBe("branch on age");
 });
