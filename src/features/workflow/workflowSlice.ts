@@ -83,6 +83,9 @@ const slice = createSlice({
       const node = state.nodes.find((n) => n.id === id);
       if (node) node.data = { ...(node.data as WorkflowNodeData), ...data };
     },
+    updateParameterSchema(state, action: PayloadAction<Record<string, unknown>>) {
+      state.meta.parameterSchema = action.payload;
+    },
     // A node's id is its persisted name, and edges reference nodes by id, so a
     // rename rewrites every edge that touches the node (and its derived id).
     // Invalid or duplicate names are ignored — the inspector surfaces the error.
@@ -117,6 +120,7 @@ export const {
   connected,
   addNode,
   updateNodeData,
+  updateParameterSchema,
   renameNode,
   setWorkflow,
 } = slice.actions;

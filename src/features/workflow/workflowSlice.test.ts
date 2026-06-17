@@ -5,6 +5,7 @@ import reducer, {
   renameNode,
   setWorkflow,
   updateNodeData,
+  updateParameterSchema,
 } from "./workflowSlice";
 import { defaultCondition } from "./condition/jsonLogic";
 import type { WorkflowDto, WorkflowNodeData } from "@/types/workflow";
@@ -123,4 +124,14 @@ test("renameNode is a no-op for an invalid name", () => {
   const state = reducer(undefined, addNode({ type: "if" }));
   const next = reducer(state, renameNode({ id: "if", name: "x" })); // too short
   expect(next.nodes.find((n) => n.id === "if")).toBeDefined();
+});
+
+test("updateParameterSchema replaces meta.parameterSchema", () => {
+  const schema = {
+    type: "object",
+    properties: { userId: { type: "string" } },
+    required: ["userId"],
+  };
+  const state = reducer(empty, updateParameterSchema(schema));
+  expect(state.meta.parameterSchema).toEqual(schema);
 });
