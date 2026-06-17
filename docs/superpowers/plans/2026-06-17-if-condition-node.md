@@ -25,10 +25,12 @@
 Mirror the chat service's `core/constants/workflow.py` enums the frontend needs, and lock the contract with a test so drift is caught.
 
 **Files:**
+
 - Create: `src/features/workflow/constants.ts`
 - Test: `src/features/workflow/constants.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces:
   - `NodeType` (`const` object): `{ START: "start", END: "end", IF: "if" }`, plus `type NodeTypeValue`.
@@ -42,7 +44,12 @@ Create `src/features/workflow/constants.test.ts`:
 
 ```ts
 import { expect, test } from "bun:test";
-import { CONTEXT_SOURCES, ConditionEdge, EdgeLabel, NodeType } from "./constants";
+import {
+  CONTEXT_SOURCES,
+  ConditionEdge,
+  EdgeLabel,
+  NodeType,
+} from "./constants";
 
 test("node type identifiers match the chat-service schema", () => {
   expect(NodeType.START).toBe("start");
@@ -134,10 +141,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The bridge between an `ExpressionInput`'s text and a JSON Logic operand. Mirrors `expression.py`'s `is_variable_path` + `parse_literal`: a `$…`/`a.b.c` path becomes `{ "var": path }`; `42`/`true`/`false`/`null` become literals; everything else is a string literal. Reverse conversion returns `null` when a node can't round-trip faithfully (the signal to fall back to raw JSON).
 
 **Files:**
+
 - Create: `src/features/workflow/expression/operand.ts`
 - Test: `src/features/workflow/expression/operand.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces:
   - `type JsonLogicValue = string | number | boolean | null | JsonLogicValue[] | { [k: string]: JsonLogicValue }`
@@ -315,10 +324,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Pure suggestion engine for `ExpressionInput`: suggest the six `$`-sources while typing a prefix, and live node names after `$nodes.`.
 
 **Files:**
+
 - Create: `src/features/workflow/expression/suggestions.ts`
 - Test: `src/features/workflow/expression/suggestions.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CONTEXT_SOURCES` from `../constants` (Task 1).
 - Produces:
   - `interface Suggestion { value: string; label: string }`
@@ -348,7 +359,9 @@ test("typing a prefix filters sources", () => {
 });
 
 test("$nodes suggestion carries a trailing dot to invite the node step", () => {
-  expect(getSuggestions("$no", [])).toEqual([{ value: "$nodes.", label: "$nodes" }]);
+  expect(getSuggestions("$no", [])).toEqual([
+    { value: "$nodes.", label: "$nodes" },
+  ]);
 });
 
 test("after $nodes. it suggests live node names", () => {
@@ -360,9 +373,11 @@ test("after $nodes. it suggests live node names", () => {
 });
 
 test("node names filter by the typed segment, case-insensitively", () => {
-  expect(getSuggestions("$nodes.KY", ["kyc_check", "fetch_patient"]).map((s) => s.label)).toEqual([
-    "kyc_check",
-  ]);
+  expect(
+    getSuggestions("$nodes.KY", ["kyc_check", "fetch_patient"]).map(
+      (s) => s.label,
+    ),
+  ).toEqual(["kyc_check"]);
 });
 
 test("no suggestions once a path goes deeper than the node name", () => {
@@ -401,7 +416,10 @@ const SEP = ".";
  * - after `$nodes.` (node-name segment) -> live node names
  * - anything deeper -> no suggestions (free-form)
  */
-export function getSuggestions(input: string, nodeNames: string[]): Suggestion[] {
+export function getSuggestions(
+  input: string,
+  nodeNames: string[],
+): Suggestion[] {
   const text = input.trimStart();
   const nodesPrefix = NODES_SOURCE + SEP;
 
@@ -416,7 +434,9 @@ export function getSuggestions(input: string, nodeNames: string[]): Suggestion[]
 
   if (text === "" || text.startsWith("$")) {
     const needle = text.toLowerCase();
-    return CONTEXT_SOURCES.filter((s) => s.toLowerCase().startsWith(needle)).map((s) => ({
+    return CONTEXT_SOURCES.filter((s) =>
+      s.toLowerCase().startsWith(needle),
+    ).map((s) => ({
       value: s === NODES_SOURCE ? `${s}${SEP}` : s,
       label: s,
     }));
@@ -447,6 +467,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The core: a nested AND/OR builder tree, its conversion to/from JSON Logic (`null` when unrepresentable), factory helpers, and a one-line summary for the node card.
 
 **Files:**
+
 - Create: `src/features/workflow/condition/types.ts`
 - Create: `src/features/workflow/condition/jsonLogic.ts`
 - Create: `src/features/workflow/condition/summarize.ts`
@@ -454,6 +475,7 @@ The core: a nested AND/OR builder tree, its conversion to/from JSON Logic (`null
 - Test: `src/features/workflow/condition/summarize.test.ts`
 
 **Interfaces:**
+
 - Consumes: `operandToJsonLogic`, `jsonLogicToOperand`, `JsonLogicValue` from `../expression/operand` (Task 2).
 - Produces:
   - `types.ts`: `COMPARE_OPS`, `type CompareOp`, `COMBINE_OPS`, `type CombineOp`, `COMPARE_OP_LABELS`, `interface Comparison`, `interface Group`, `type ConditionTree`, `newId(prefix?: string): string`.
@@ -481,8 +503,20 @@ test("treeToJsonLogic serialises a flat AND of comparisons", () => {
     id: "g",
     combinator: "and",
     children: [
-      { kind: "comparison", id: "c1", left: "$state.age", op: ">", right: "18" },
-      { kind: "comparison", id: "c2", left: "$state.country", op: "==", right: "US" },
+      {
+        kind: "comparison",
+        id: "c1",
+        left: "$state.age",
+        op: ">",
+        right: "18",
+      },
+      {
+        kind: "comparison",
+        id: "c2",
+        left: "$state.country",
+        op: "==",
+        right: "US",
+      },
     ],
   };
   expect(treeToJsonLogic(tree)).toEqual({
@@ -499,14 +533,32 @@ test("treeToJsonLogic serialises nested groups", () => {
     id: "g",
     combinator: "and",
     children: [
-      { kind: "comparison", id: "c1", left: "$state.age", op: ">", right: "18" },
+      {
+        kind: "comparison",
+        id: "c1",
+        left: "$state.age",
+        op: ">",
+        right: "18",
+      },
       {
         kind: "group",
         id: "g2",
         combinator: "or",
         children: [
-          { kind: "comparison", id: "c2", left: "$state.country", op: "==", right: "US" },
-          { kind: "comparison", id: "c3", left: "$state.country", op: "==", right: "CA" },
+          {
+            kind: "comparison",
+            id: "c2",
+            left: "$state.country",
+            op: "==",
+            right: "US",
+          },
+          {
+            kind: "comparison",
+            id: "c3",
+            left: "$state.country",
+            op: "==",
+            right: "CA",
+          },
         ],
       },
     ],
@@ -554,7 +606,12 @@ test("factories produce representable defaults", () => {
   expect(treeToJsonLogic(emptyGroup("or"))).toEqual({ or: [] });
   expect(defaultCondition()).toEqual({ and: [] });
   const cmp = emptyComparison();
-  expect(cmp).toMatchObject({ kind: "comparison", op: "==", left: "", right: "" });
+  expect(cmp).toMatchObject({
+    kind: "comparison",
+    op: "==",
+    left: "",
+    right: "",
+  });
 });
 ```
 
@@ -577,17 +634,26 @@ test("summarises a flat AND of comparisons", () => {
       { "==": [{ var: "$state.country" }, "US"] },
     ],
   };
-  expect(summarizeCondition(jl)).toBe("$state.age > 18 AND $state.country == US");
+  expect(summarizeCondition(jl)).toBe(
+    "$state.age > 18 AND $state.country == US",
+  );
 });
 
 test("wraps nested groups in parentheses", () => {
   const jl = {
     and: [
       { ">": [{ var: "$state.age" }, 18] },
-      { or: [{ "==": [{ var: "$state.c" }, "US"] }, { "==": [{ var: "$state.c" }, "CA"] }] },
+      {
+        or: [
+          { "==": [{ var: "$state.c" }, "US"] },
+          { "==": [{ var: "$state.c" }, "CA"] },
+        ],
+      },
     ],
   };
-  expect(summarizeCondition(jl)).toBe("$state.age > 18 AND ($state.c == US OR $state.c == CA)");
+  expect(summarizeCondition(jl)).toBe(
+    "$state.age > 18 AND ($state.c == US OR $state.c == CA)",
+  );
 });
 
 test("falls back to a generic label for non-builder JSON", () => {
@@ -676,7 +742,10 @@ import {
 export function treeToJsonLogic(tree: ConditionTree): JsonLogicValue {
   if (tree.kind === "comparison") {
     return {
-      [tree.op]: [operandToJsonLogic(tree.left), operandToJsonLogic(tree.right)],
+      [tree.op]: [
+        operandToJsonLogic(tree.left),
+        operandToJsonLogic(tree.right),
+      ],
     };
   }
   return { [tree.combinator]: tree.children.map(treeToJsonLogic) };
@@ -699,7 +768,12 @@ export function jsonLogicToTree(jl: JsonLogicValue): ConditionTree | null {
       if (child === null) return null;
       children.push(child);
     }
-    return { kind: "group", id: newId("g"), combinator: op as CombineOp, children };
+    return {
+      kind: "group",
+      id: newId("g"),
+      combinator: op as CombineOp,
+      children,
+    };
   }
 
   if ((COMPARE_OPS as readonly string[]).includes(op)) {
@@ -707,7 +781,13 @@ export function jsonLogicToTree(jl: JsonLogicValue): ConditionTree | null {
     const left = jsonLogicToOperand(args[0]!);
     const right = jsonLogicToOperand(args[1]!);
     if (left === null || right === null) return null;
-    return { kind: "comparison", id: newId("c"), op: op as CompareOp, left, right };
+    return {
+      kind: "comparison",
+      id: newId("c"),
+      op: op as CompareOp,
+      left,
+      right,
+    };
   }
 
   return null;
@@ -762,7 +842,9 @@ function summarizeTree(tree: ConditionTree): string {
   if (tree.children.length === 0) return "Always (empty)";
   const sep = ` ${tree.combinator.toUpperCase()} `;
   return tree.children
-    .map((c) => (c.kind === "group" ? `(${summarizeTree(c)})` : summarizeTree(c)))
+    .map((c) =>
+      c.kind === "group" ? `(${summarizeTree(c)})` : summarizeTree(c),
+    )
     .join(sep);
 }
 ```
@@ -788,10 +870,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Refactor the slice to use the constants, seed the if node's condition, derive edge labels from the source handle, and add `updateNodeData` for the inspector.
 
 **Files:**
+
 - Modify: `src/features/workflow/workflowSlice.ts`
 - Test: `src/features/workflow/workflowSlice.test.ts` (append tests; file already exists)
 
 **Interfaces:**
+
 - Consumes: `NodeType`, `EdgeLabel` from `./constants` (Task 1); `defaultCondition` from `./condition/jsonLogic` (Task 4).
 - Produces: existing actions plus `updateNodeData({ id: string; data: Partial<WorkflowNodeData> })`. `addNode({ type: "if" })` seeds `parameters.condition = defaultCondition()`. `connected` sets `label = sourceHandle ?? EdgeLabel.MAIN` and edge id `\`${source}->${target}:${label}\``.
 
@@ -812,14 +896,21 @@ test("addNode('if') seeds a default condition", () => {
   const state = reducer(undefined, addNode({ type: "if" }));
   const ifNode = state.nodes.find((n) => n.type === "if");
   expect(ifNode).toBeDefined();
-  expect((ifNode!.data as WorkflowNodeData).parameters).toEqual({ condition: defaultCondition() });
+  expect((ifNode!.data as WorkflowNodeData).parameters).toEqual({
+    condition: defaultCondition(),
+  });
 });
 
 test("connected derives the edge label from the source handle", () => {
   const base = reducer(undefined, addNode({ type: "if" }));
   const next = reducer(
     base,
-    connected({ source: "if", target: "end", sourceHandle: "true", targetHandle: null }),
+    connected({
+      source: "if",
+      target: "end",
+      sourceHandle: "true",
+      targetHandle: null,
+    }),
   );
   const edge = next.edges.find((e) => e.source === "if" && e.target === "end");
   expect(edge?.label).toBe("true");
@@ -830,7 +921,12 @@ test("connected falls back to 'main' when there is no source handle", () => {
   const base = reducer(undefined, addNode({ type: "if" }));
   const next = reducer(
     base,
-    connected({ source: "start", target: "end", sourceHandle: null, targetHandle: null }),
+    connected({
+      source: "start",
+      target: "end",
+      sourceHandle: null,
+      targetHandle: null,
+    }),
   );
   expect(next.edges.find((e) => e.source === "start")?.label).toBe("main");
 });
@@ -868,9 +964,12 @@ Replace the `nodeData` function with:
 
 ```ts
 function nodeData(type: string): WorkflowNodeData {
-  if (type === NodeType.START) return { description: "Workflow entry point", parameters: {} };
-  if (type === NodeType.END) return { description: "Workflow end", parameters: {} };
-  if (type === NodeType.IF) return { description: "", parameters: { condition: defaultCondition() } };
+  if (type === NodeType.START)
+    return { description: "Workflow entry point", parameters: {} };
+  if (type === NodeType.END)
+    return { description: "Workflow end", parameters: {} };
+  if (type === NodeType.IF)
+    return { description: "", parameters: { condition: defaultCondition() } };
   return { description: "", parameters: {} };
 }
 ```
@@ -907,8 +1006,14 @@ updateNodeData(state, action: PayloadAction<{ id: string; data: Partial<Workflow
 Add `updateNodeData` to the exported actions:
 
 ```ts
-export const { nodesChanged, edgesChanged, connected, addNode, updateNodeData, setWorkflow } =
-  slice.actions;
+export const {
+  nodesChanged,
+  edgesChanged,
+  connected,
+  addNode,
+  updateNodeData,
+  setWorkflow,
+} = slice.actions;
 ```
 
 Finally, update the seeded `initialState` nodes to use the constants instead of inline strings:
@@ -946,9 +1051,11 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The serializer needs no code change — this task locks the contract with tests proving an if node + `true`/`false` edges round-trip to the chat-service DTO shape.
 
 **Files:**
+
 - Test: `src/features/workflow/serialize.test.ts` (append)
 
 **Interfaces:**
+
 - Consumes: `toWorkflowDto`, `fromWorkflowDto` from `./serialize`; `defaultCondition` from `./condition/jsonLogic`.
 - Produces: nothing (tests only).
 
@@ -965,13 +1072,40 @@ test("toWorkflowDto emits an if node with condition and true/false edges", () =>
   const wf: SerializableWorkflow = {
     meta: { name: "wf", description: "", parameterSchema: {} },
     nodes: [
-      { id: "if", type: "if", position: { x: 0, y: 0 }, data: { description: "", parameters: { condition } } },
-      { id: "yes", type: "end", position: { x: 0, y: 100 }, data: { description: "", parameters: {} } },
-      { id: "no", type: "end", position: { x: 100, y: 100 }, data: { description: "", parameters: {} } },
+      {
+        id: "if",
+        type: "if",
+        position: { x: 0, y: 0 },
+        data: { description: "", parameters: { condition } },
+      },
+      {
+        id: "yes",
+        type: "end",
+        position: { x: 0, y: 100 },
+        data: { description: "", parameters: {} },
+      },
+      {
+        id: "no",
+        type: "end",
+        position: { x: 100, y: 100 },
+        data: { description: "", parameters: {} },
+      },
     ],
     edges: [
-      { id: "if->yes:true", source: "if", target: "yes", label: "true", data: { label: "true" } },
-      { id: "if->no:false", source: "if", target: "no", label: "false", data: { label: "false" } },
+      {
+        id: "if->yes:true",
+        source: "if",
+        target: "yes",
+        label: "true",
+        data: { label: "true" },
+      },
+      {
+        id: "if->no:false",
+        source: "if",
+        target: "no",
+        label: "false",
+        data: { label: "false" },
+      },
     ],
   };
 
@@ -991,11 +1125,27 @@ test("fromWorkflowDto restores an if node condition and labelled edges", () => {
     name: "wf",
     description: "",
     parameterSchema: {},
-    nodes: [{ name: "if", type: "if", description: "", parameters: { condition }, position: { x: 0, y: 0 } }],
-    edges: { if: [{ to: "yes", label: "true" }, { to: "no", label: "false" }] },
+    nodes: [
+      {
+        name: "if",
+        type: "if",
+        description: "",
+        parameters: { condition },
+        position: { x: 0, y: 0 },
+      },
+    ],
+    edges: {
+      if: [
+        { to: "yes", label: "true" },
+        { to: "no", label: "false" },
+      ],
+    },
   });
   const node = restored.nodes.find((n) => n.id === "if");
-  expect((node!.data as { parameters: Record<string, unknown> }).parameters.condition).toEqual(condition);
+  expect(
+    (node!.data as { parameters: Record<string, unknown> }).parameters
+      .condition,
+  ).toEqual(condition);
   expect(restored.edges.map((e) => e.label)).toEqual(["true", "false"]);
 });
 ```
@@ -1023,9 +1173,11 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 A controlled text input with a hand-rolled suggestion dropdown driven by `getSuggestions`. Presentational — no store access. (No DOM test infra; verified by typecheck + the integration smoke in Task 11.)
 
 **Files:**
+
 - Create: `src/features/workflow/components/ExpressionInput.tsx`
 
 **Interfaces:**
+
 - Consumes: `getSuggestions` from `../expression/suggestions` (Task 3).
 - Produces: `ExpressionInput({ value, onChange, nodeNames, placeholder?, className? })`.
 
@@ -1057,7 +1209,10 @@ export function ExpressionInput({
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const listId = useId();
-  const suggestions = useMemo(() => getSuggestions(value, nodeNames), [value, nodeNames]);
+  const suggestions = useMemo(
+    () => getSuggestions(value, nodeNames),
+    [value, nodeNames],
+  );
   const visible = open && suggestions.length > 0;
 
   function accept(index: number) {
@@ -1121,7 +1276,9 @@ export function ExpressionInput({
               }}
               onMouseEnter={() => setActive(i)}
               className={`cursor-pointer px-2 py-1 text-sm ${
-                i === active ? "bg-primary/10 text-primary" : "text-slate-700 dark:text-slate-200"
+                i === active
+                  ? "bg-primary/10 text-primary"
+                  : "text-slate-700 dark:text-slate-200"
               }`}
             >
               {s.label}
@@ -1155,10 +1312,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The recursive visual builder and the wrapper that adds the Builder/JSON toggle.
 
 **Files:**
+
 - Create: `src/features/workflow/condition/ConditionBuilder.tsx`
 - Create: `src/features/workflow/condition/ConditionEditor.tsx`
 
 **Interfaces:**
+
 - Consumes: `ExpressionInput` (Task 7); `types.ts` exports and `jsonLogic.ts` exports (Task 4); `JsonLogicValue` (Task 2).
 - Produces:
   - `ConditionBuilder({ group, nodeNames, onChange, onRemove?, depth? })`
@@ -1190,7 +1349,13 @@ interface BuilderProps {
   depth?: number;
 }
 
-export function ConditionBuilder({ group, nodeNames, onChange, onRemove, depth = 0 }: BuilderProps) {
+export function ConditionBuilder({
+  group,
+  nodeNames,
+  onChange,
+  onRemove,
+  depth = 0,
+}: BuilderProps) {
   function updateChild(index: number, child: ConditionTree) {
     const children = group.children.slice();
     children[index] = child;
@@ -1209,13 +1374,17 @@ export function ConditionBuilder({ group, nodeNames, onChange, onRemove, depth =
       }`}
     >
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Match</span>
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Match
+        </span>
         <div className="flex overflow-hidden rounded-md border border-slate-300 dark:border-slate-600">
           {COMBINE_OPS.map((op) => (
             <button
               key={op}
               type="button"
-              onClick={() => onChange({ ...group, combinator: op as CombineOp })}
+              onClick={() =>
+                onChange({ ...group, combinator: op as CombineOp })
+              }
               className={`px-2 py-0.5 text-xs font-semibold uppercase ${
                 group.combinator === op
                   ? "bg-primary text-white"
@@ -1261,21 +1430,30 @@ export function ConditionBuilder({ group, nodeNames, onChange, onRemove, depth =
           ),
         )}
         {group.children.length === 0 && (
-          <p className="px-1 text-xs italic text-slate-400">No conditions yet.</p>
+          <p className="px-1 text-xs italic text-slate-400">
+            No conditions yet.
+          </p>
         )}
       </div>
 
       <div className="mt-2 flex gap-2">
         <button
           type="button"
-          onClick={() => onChange({ ...group, children: [...group.children, emptyComparison()] })}
+          onClick={() =>
+            onChange({
+              ...group,
+              children: [...group.children, emptyComparison()],
+            })
+          }
           className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           + Condition
         </button>
         <button
           type="button"
-          onClick={() => onChange({ ...group, children: [...group.children, emptyGroup()] })}
+          onClick={() =>
+            onChange({ ...group, children: [...group.children, emptyGroup()] })
+          }
           className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           + Group
@@ -1292,7 +1470,12 @@ interface RowProps {
   onRemove: () => void;
 }
 
-function ComparisonRow({ comparison, nodeNames, onChange, onRemove }: RowProps) {
+function ComparisonRow({
+  comparison,
+  nodeNames,
+  onChange,
+  onRemove,
+}: RowProps) {
   return (
     <div className="flex items-start gap-1">
       <div className="flex-1">
@@ -1305,7 +1488,9 @@ function ComparisonRow({ comparison, nodeNames, onChange, onRemove }: RowProps) 
       </div>
       <select
         value={comparison.op}
-        onChange={(e) => onChange({ ...comparison, op: e.target.value as CompareOp })}
+        onChange={(e) =>
+          onChange({ ...comparison, op: e.target.value as CompareOp })
+        }
         className="rounded-md border border-slate-300 bg-white px-1 py-1 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
       >
         {COMPARE_OPS.map((op) => (
@@ -1374,7 +1559,11 @@ function safeParse(text: string): JsonLogicValue {
 const UNSUPPORTED_MSG =
   "This JSON can't be edited in the builder. Wrap conditions in an and/or group of comparisons, or keep editing as JSON.";
 
-export function ConditionEditor({ condition, nodeNames, onChange }: ConditionEditorProps) {
+export function ConditionEditor({
+  condition,
+  nodeNames,
+  onChange,
+}: ConditionEditorProps) {
   // Parse once for initial state; the component is remounted via key={nodeId}
   // when the selected node changes (see Inspector).
   const initialTree = useMemo<Group | null>(() => {
@@ -1386,7 +1575,9 @@ export function ConditionEditor({ condition, nodeNames, onChange }: ConditionEdi
 
   const [mode, setMode] = useState<Mode>(initialTree ? "builder" : "json");
   const [tree, setTree] = useState<Group>(initialTree ?? emptyGroup("and"));
-  const [jsonText, setJsonText] = useState(() => JSON.stringify(condition ?? {}, null, 2));
+  const [jsonText, setJsonText] = useState(() =>
+    JSON.stringify(condition ?? {}, null, 2),
+  );
   const [jsonError, setJsonError] = useState("");
 
   function updateTree(next: Group) {
@@ -1456,7 +1647,11 @@ export function ConditionEditor({ condition, nodeNames, onChange }: ConditionEdi
       </div>
 
       {mode === "builder" ? (
-        <ConditionBuilder group={tree} nodeNames={nodeNames} onChange={updateTree} />
+        <ConditionBuilder
+          group={tree}
+          nodeNames={nodeNames}
+          onChange={updateTree}
+        />
       ) : (
         <div className="flex flex-col gap-1">
           <textarea
@@ -1495,11 +1690,13 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The canvas node with one target handle and two labelled source handles, plus its registration and palette entry.
 
 **Files:**
+
 - Create: `src/features/workflow/nodes/IfNode.tsx`
 - Modify: `src/features/workflow/nodes/nodeTypes.ts`
 - Modify: `src/features/workflow/nodes/dragData.ts`
 
 **Interfaces:**
+
 - Consumes: `ConditionEdge`, `NodeType` from `../constants`; `summarizeCondition` from `../condition/summarize`; `WorkflowNodeData` type.
 - Produces: `IfNode` registered under key `if`; palette item `{ type: "if", label: "If / Condition" }`.
 
@@ -1519,16 +1716,18 @@ export function IfNode({ data, selected }: NodeProps) {
 
   return (
     <div
-      className={`min-w-[160px] rounded-xl border bg-white px-4 py-3 shadow-sm dark:bg-slate-900 ${
-        selected ? "border-primary" : "border-amber-300 dark:border-amber-500/40"
+      className={`min-w-40 rounded-xl border bg-white px-4 py-3 shadow-sm dark:bg-slate-900 ${
+        selected
+          ? "border-primary"
+          : "border-amber-300 dark:border-amber-500/40"
       }`}
     >
-      <Handle type="target" position={Position.Top} className="!bg-amber-500" />
+      <Handle type="target" position={Position.Top} className="bg-amber-500!" />
       <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
         If
       </p>
       <p
-        className="mt-0.5 max-w-[200px] truncate text-xs text-slate-500 dark:text-slate-400"
+        className="mt-0.5 max-w-50 truncate text-xs text-slate-500 dark:text-slate-400"
         title={summary}
       >
         {summary}
@@ -1542,14 +1741,14 @@ export function IfNode({ data, selected }: NodeProps) {
         type="source"
         position={Position.Bottom}
         style={{ left: "25%" }}
-        className="!bg-emerald-500"
+        className="bg-emerald-500!"
       />
       <Handle
         id={ConditionEdge.FALSE}
         type="source"
         position={Position.Bottom}
         style={{ left: "75%" }}
-        className="!bg-rose-500"
+        className="bg-rose-500!"
       />
     </div>
   );
@@ -1611,10 +1810,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The right-side inspector that edits the selected node's description and (for if nodes) its condition, mounted in the page layout.
 
 **Files:**
+
 - Create: `src/features/workflow/Inspector.tsx`
 - Modify: `src/features/workflow/WorkflowBuilderPage.tsx`
 
 **Interfaces:**
+
 - Consumes: `useAppDispatch`/`useAppSelector` from `@/store/hooks`; `updateNodeData` from `./workflowSlice` (Task 5); `NodeType` from `./constants`; `ConditionEditor` from `./condition/ConditionEditor` (Task 8); `JsonLogicValue`, `WorkflowNodeData` types.
 - Produces: `Inspector` (no props) mounted to the right of the canvas.
 
@@ -1655,8 +1856,12 @@ export function Inspector() {
   return (
     <aside className={panel}>
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Node</p>
-        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{selected.id}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+          Node
+        </p>
+        <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+          {selected.id}
+        </p>
         <p className="text-xs text-slate-400">{selected.type}</p>
       </div>
 
@@ -1668,7 +1873,12 @@ export function Inspector() {
           type="text"
           value={data.description}
           onChange={(e) =>
-            dispatch(updateNodeData({ id: selected.id, data: { description: e.target.value } }))
+            dispatch(
+              updateNodeData({
+                id: selected.id,
+                data: { description: e.target.value },
+              }),
+            )
           }
           className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
         />
@@ -1683,7 +1893,9 @@ export function Inspector() {
             dispatch(
               updateNodeData({
                 id: selected.id,
-                data: { parameters: { ...data.parameters, [CONDITION_KEY]: next } },
+                data: {
+                  parameters: { ...data.parameters, [CONDITION_KEY]: next },
+                },
               }),
             )
           }
@@ -1705,13 +1917,16 @@ import { Inspector } from "./Inspector";
 Then place `<Inspector />` to the right of the canvas — replace the inner flex row so it reads:
 
 ```tsx
-        <div className="flex min-h-0 flex-1">
-          <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((c) => !c)} />
-          <div className="min-w-0 flex-1">
-            <WorkflowCanvas />
-          </div>
-          <Inspector />
-        </div>
+<div className="flex min-h-0 flex-1">
+  <Sidebar
+    collapsed={sidebarCollapsed}
+    onToggle={() => setSidebarCollapsed((c) => !c)}
+  />
+  <div className="min-w-0 flex-1">
+    <WorkflowCanvas />
+  </div>
+  <Inspector />
+</div>
 ```
 
 - [ ] **Step 3: Typecheck**
@@ -1722,6 +1937,7 @@ Expected: no errors.
 - [ ] **Step 4: Manual smoke test**
 
 Run: `bun dev`, open the app, then verify:
+
 1. The palette shows **If / Condition**; drag it onto the canvas — a node titled "If" with "No condition"/"Always (empty)" and green `true` / red `false` handles appears.
 2. Click the if node → the right inspector shows the condition builder. Click **+ Condition**, type `$state.` in the left field → the dropdown lists the six sources / node names; pick one, choose an operator, type `18` on the right. The node card summary updates (e.g. `$state.age > 18`).
 3. Click **+ Group**, give it `OR`, add two comparisons — nesting renders indented.
@@ -1747,9 +1963,11 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Update the feature docs and run the complete verification suite.
 
 **Files:**
+
 - Modify: `src/features/workflow/CLAUDE.md`
 
 **Interfaces:**
+
 - Consumes: everything above.
 - Produces: updated docs; green test + typecheck.
 
@@ -1800,4 +2018,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 - **Spec coverage:** constants (T1) ✓, ExpressionInput + suggestions (T7, T3) ✓, operand codec (T2) ✓, condition model/codec/summary (T4) ✓, ConditionBuilder/Editor with nesting + JSON fallback (T8) ✓, Inspector (T10) ✓, IfNode + handles + palette (T9) ✓, slice changes (T5) ✓, serialization round-trip (T6) ✓, docs (T11) ✓.
 - **Type consistency:** `JsonLogicValue` defined in T2 and reused everywhere; `Group`/`Comparison`/`ConditionTree`, `CompareOp`/`CombineOp` defined in T4 and reused in T8; `updateNodeData` signature consistent between T5 (definition) and T10 (use); `getSuggestions`/`Suggestion` consistent T3↔T7; `treeToJsonLogic`/`jsonLogicToTree`/`emptyGroup`/`emptyComparison`/`defaultCondition` consistent T4↔T5↔T6↔T8.
 - **No DOM tests:** intentional — repo has no DOM test infra; the hard logic is fully unit-tested in pure modules, UI verified via typecheck (every UI task) + the manual smoke (T10).
+
+```
+
 ```
