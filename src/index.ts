@@ -1,11 +1,6 @@
 import { serve } from "bun";
 import index from "./index.html";
-
-// Taggle agent API — proxied so the tenant header stays server-side and the
-// browser avoids CORS. Override via env in deployment.
-const TAGGLE_API_BASE_URL = process.env.TAGGLE_API_BASE_URL ?? "http://localhost:8000";
-const TAGGLE_API_PREFIX = process.env.TAGGLE_API_PREFIX ?? "/chat2/api/v1";
-const TAGGLE_ORGANIZATION = process.env.TAGGLE_ORGANIZATION ?? "TAGGLE";
+import { AGENT_FIXTURES } from "./services/agentFixtures";
 
 const server = serve({
   routes: {
@@ -29,25 +24,19 @@ const server = serve({
       },
     },
 
+    // Dummy agent list for offline development. The Taggle backend isn't wired
+    // up here, so we serve fixtures (see src/services/agentFixtures.ts) shaped
+    // like the real `PagingResponse<AgentConfigResponse>`. Swap back to live
+    // forwarding (fetch the chat service with an `Organization` header) once the
+    // backend is reachable — see docs/superpowers/plans/2026-06-17-workflow-agent-node.md.
     "/api/agents": {
-      async GET(req) {
-        const incoming = new URL(req.url);
-        const target = new URL(`${TAGGLE_API_BASE_URL}${TAGGLE_API_PREFIX}/agents`);
-        incoming.searchParams.forEach((value, key) => target.searchParams.set(key, value));
-        try {
-          const upstream = await fetch(target, {
-            headers: { Organization: TAGGLE_ORGANIZATION },
-          });
-          if (!upstream.ok) {
-            return new Response(`Upstream error: ${upstream.status}`, { status: 502 });
-          }
-          return new Response(upstream.body, {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          });
-        } catch {
-          return new Response("Agent service unreachable", { status: 502 });
-        }
+      GET() {
+        return Response.json({
+          items: AGENT_FIXTURES,
+          currentPage: 1,
+          pageSize: AGENT_FIXTURES.length,
+          totalItems: AGENT_FIXTURES.length,
+        });
       },
     },
 
