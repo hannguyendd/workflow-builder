@@ -5,6 +5,7 @@ Client-side data access. Thin `fetch` wrappers around the Bun server's `/api/*` 
 ## Files
 
 - `workflow.ts` — `loadWorkflow()` (GET `/api/workflow`, returns `null` on 404) and `saveWorkflow(dto)` (PUT `/api/workflow`). Both speak the persisted `WorkflowDto`.
+- `agents.ts` — `listAgents()` (GET `/api/agents`, proxied to the Taggle agent API) and the pure `toAgentConfig` mapper. Returns `AgentConfig[]` from `@/types/agent`.
 
 ## Conventions
 

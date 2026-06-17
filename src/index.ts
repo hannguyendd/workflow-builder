@@ -1,6 +1,12 @@
 import { serve } from "bun";
 import index from "./index.html";
 
+// Taggle agent API — proxied so the tenant header stays server-side and the
+// browser avoids CORS. Override via env in deployment.
+const TAGGLE_API_BASE_URL = process.env.TAGGLE_API_BASE_URL ?? "http://localhost:8000";
+const TAGGLE_API_PREFIX = process.env.TAGGLE_API_PREFIX ?? "/chat2/api/v1";
+const TAGGLE_ORGANIZATION = process.env.TAGGLE_ORGANIZATION ?? "TAGGLE";
+
 const server = serve({
   routes: {
     // Serve index.html for all unmatched routes.
@@ -20,6 +26,28 @@ const server = serve({
         const body = await req.json();
         await Bun.write("data/workflow.json", JSON.stringify(body, null, 2));
         return new Response(null, { status: 204 });
+      },
+    },
+
+    "/api/agents": {
+      async GET(req) {
+        const incoming = new URL(req.url);
+        const target = new URL(`${TAGGLE_API_BASE_URL}${TAGGLE_API_PREFIX}/agents`);
+        incoming.searchParams.forEach((value, key) => target.searchParams.set(key, value));
+        try {
+          const upstream = await fetch(target, {
+            headers: { Organization: TAGGLE_ORGANIZATION },
+          });
+          if (!upstream.ok) {
+            return new Response(`Upstream error: ${upstream.status}`, { status: 502 });
+          }
+          return new Response(upstream.body, {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch {
+          return new Response("Agent service unreachable", { status: 502 });
+        }
       },
     },
 
