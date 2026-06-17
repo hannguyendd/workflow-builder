@@ -41,3 +41,33 @@ test("no suggestions once a path goes deeper than the node name", () => {
 test("non-$ input yields no suggestions", () => {
   expect(getSuggestions("age", [])).toEqual([]);
 });
+
+test("after $parameters. it suggests schema field names with type labels", () => {
+  const params = [
+    { name: "userId", type: "string" },
+    { name: "limit", type: "number" },
+  ];
+  expect(getSuggestions("$parameters.", [], params)).toEqual([
+    { value: "$parameters.userId", label: "userId — string" },
+    { value: "$parameters.limit", label: "limit — number" },
+  ]);
+});
+
+test("parameter names filter by the typed segment, case-insensitively", () => {
+  const params = [
+    { name: "userId", type: "string" },
+    { name: "limit", type: "number" },
+  ];
+  expect(getSuggestions("$parameters.u", [], params).map((s) => s.label)).toEqual([
+    "userId — string",
+  ]);
+});
+
+test("no suggestions once a path goes deeper than the parameter name", () => {
+  const params = [{ name: "user", type: "string" }];
+  expect(getSuggestions("$parameters.user.id", [], params)).toEqual([]);
+});
+
+test("$parameters. with no schema yields no field suggestions", () => {
+  expect(getSuggestions("$parameters.", [])).toEqual([]);
+});
