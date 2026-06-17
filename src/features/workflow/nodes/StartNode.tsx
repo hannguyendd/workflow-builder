@@ -6,7 +6,11 @@ export function StartNode(_props: NodeProps) {
       <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
         Start
       </p>
-      <Handle type="source" position={Position.Bottom} className="!bg-emerald-500" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="bg-emerald-500!"
+      />
     </div>
   );
 }
