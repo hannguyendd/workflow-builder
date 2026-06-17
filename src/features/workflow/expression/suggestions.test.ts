@@ -17,7 +17,9 @@ test("typing a prefix filters sources", () => {
 });
 
 test("$nodes suggestion carries a trailing dot to invite the node step", () => {
-  expect(getSuggestions("$no", [])).toEqual([{ value: "$nodes.", label: "$nodes" }]);
+  expect(getSuggestions("$no", [])).toEqual([
+    { value: "$nodes.", label: "$nodes" },
+  ]);
 });
 
 test("after $nodes. it suggests live node names", () => {
@@ -29,9 +31,11 @@ test("after $nodes. it suggests live node names", () => {
 });
 
 test("node names filter by the typed segment, case-insensitively", () => {
-  expect(getSuggestions("$nodes.KY", ["kyc_check", "fetch_patient"]).map((s) => s.label)).toEqual([
-    "kyc_check",
-  ]);
+  expect(
+    getSuggestions("$nodes.KY", ["kyc_check", "fetch_patient"]).map(
+      (s) => s.label,
+    ),
+  ).toEqual(["kyc_check"]);
 });
 
 test("no suggestions once a path goes deeper than the node name", () => {
@@ -53,14 +57,27 @@ test("after $parameters. it suggests schema field names with type labels", () =>
   ]);
 });
 
+test("parameter suggestions carry the field description when present", () => {
+  const params = [
+    { name: "userId", type: "string", description: "The user identifier" },
+  ];
+  expect(getSuggestions("$parameters.", [], params)).toEqual([
+    {
+      value: "$parameters.userId",
+      label: "userId — string",
+      description: "The user identifier",
+    },
+  ]);
+});
+
 test("parameter names filter by the typed segment, case-insensitively", () => {
   const params = [
     { name: "userId", type: "string" },
     { name: "limit", type: "number" },
   ];
-  expect(getSuggestions("$parameters.u", [], params).map((s) => s.label)).toEqual([
-    "userId — string",
-  ]);
+  expect(
+    getSuggestions("$parameters.u", [], params).map((s) => s.label),
+  ).toEqual(["userId — string"]);
 });
 
 test("no suggestions once a path goes deeper than the parameter name", () => {

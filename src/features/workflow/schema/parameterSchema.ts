@@ -7,7 +7,12 @@
 
 export type ParamType = "string" | "number" | "integer" | "boolean";
 
-export const PARAM_TYPES: readonly ParamType[] = ["string", "number", "integer", "boolean"];
+export const PARAM_TYPES: readonly ParamType[] = [
+  "string",
+  "number",
+  "integer",
+  "boolean",
+];
 
 export interface ParameterField {
   name: string;
@@ -20,6 +25,7 @@ export interface ParameterField {
 export interface ParameterEntry {
   name: string;
   type: string;
+  description?: string;
 }
 
 const ROOT_TYPE = "object";
@@ -29,11 +35,16 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isParamType(value: unknown): value is ParamType {
-  return typeof value === "string" && (PARAM_TYPES as readonly string[]).includes(value);
+  return (
+    typeof value === "string" &&
+    (PARAM_TYPES as readonly string[]).includes(value)
+  );
 }
 
 /** True when a property object is a bare scalar the form can represent. */
-function isSimpleProperty(prop: unknown): prop is { type: ParamType; description?: string } {
+function isSimpleProperty(
+  prop: unknown,
+): prop is { type: ParamType; description?: string } {
   if (!isPlainObject(prop)) return false;
   if (!isParamType(prop.type)) return false;
   // Only `type` and `description` are representable; anything else (enum,
@@ -63,7 +74,9 @@ export function schemaToFields(schema: unknown): ParameterField[] | null {
 }
 
 /** Editable fields -> JSON Schema object. */
-export function fieldsToSchema(fields: ParameterField[]): Record<string, unknown> {
+export function fieldsToSchema(
+  fields: ParameterField[],
+): Record<string, unknown> {
   const properties: Record<string, unknown> = {};
   const required: string[] = [];
   for (const f of fields) {
@@ -80,8 +93,19 @@ export function parameterEntries(schema: unknown): ParameterEntry[] {
   if (!isPlainObject(schema)) return [];
   const props = schema.properties;
   if (!isPlainObject(props)) return [];
-  return Object.entries(props).map(([name, prop]) => ({
-    name,
-    type: isPlainObject(prop) && typeof prop.type === "string" ? prop.type : "",
-  }));
+  return Object.entries(props).map(([name, prop]) => {
+    const entry: ParameterEntry = {
+      name,
+      type:
+        isPlainObject(prop) && typeof prop.type === "string" ? prop.type : "",
+    };
+    if (
+      isPlainObject(prop) &&
+      typeof prop.description === "string" &&
+      prop.description
+    ) {
+      entry.description = prop.description;
+    }
+    return entry;
+  });
 }

@@ -5,6 +5,7 @@ import type { ParameterEntry } from "../schema/parameterSchema";
 export interface Suggestion {
   value: string;
   label: string;
+  description?: string;
 }
 
 const NODES_SOURCE = "$nodes";
@@ -42,12 +43,21 @@ export function getSuggestions(
     const needle = rest.toLowerCase();
     return parameters
       .filter((p) => p.name.toLowerCase().startsWith(needle))
-      .map((p) => ({ value: `${paramsPrefix}${p.name}`, label: `${p.name} — ${p.type}` }));
+      .map((p) => {
+        const suggestion: Suggestion = {
+          value: `${paramsPrefix}${p.name}`,
+          label: `${p.name} — ${p.type}`,
+        };
+        if (p.description) suggestion.description = p.description;
+        return suggestion;
+      });
   }
 
   if (text === "" || text.startsWith("$")) {
     const needle = text.toLowerCase();
-    return CONTEXT_SOURCES.filter((s) => s.toLowerCase().startsWith(needle)).map((s) => ({
+    return CONTEXT_SOURCES.filter((s) =>
+      s.toLowerCase().startsWith(needle),
+    ).map((s) => ({
       value: s === NODES_SOURCE ? `${s}${SEP}` : s,
       label: s,
     }));

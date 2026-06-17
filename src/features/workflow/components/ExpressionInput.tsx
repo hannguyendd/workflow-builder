@@ -91,10 +91,17 @@ export function ExpressionInput({
               }}
               onMouseEnter={() => setActive(i)}
               className={`cursor-pointer px-2 py-1 text-sm ${
-                i === active ? "bg-primary/10 text-primary" : "text-slate-700 dark:text-slate-200"
+                i === active
+                  ? "bg-primary/10 text-primary"
+                  : "text-slate-700 dark:text-slate-200"
               }`}
             >
-              {s.label}
+              <span className="block">{s.label}</span>
+              {s.description && (
+                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                  {s.description}
+                </span>
+              )}
             </li>
           ))}
         </ul>
