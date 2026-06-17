@@ -15,10 +15,13 @@ The workflow builder feature: a visual graph editor built on `@xyflow/react`, ba
 - `serialize.ts` — `toWorkflowDto` / `fromWorkflowDto`, the only place that maps between store shape and persisted JSON.
 - `components/ExpressionInput.tsx` — reusable autocomplete text input for `$source.path` operands.
 - `schema/parameterSchema.ts` — pure codec between the JSON Schema `parameterSchema` and an editable field list; `parameterEntries()` feeds `$parameters.<field>` autocomplete. Guarded by `schema/parameterSchema.test.ts`.
-- `expression/` — pure operand codec (`operand.ts`) and autocomplete logic (`suggestions.ts`).
+- `expression/` — pure operand codec (`operand.ts`), autocomplete logic (`suggestions.ts`), the `NodeOutputs` model + builder (`nodeOutputs.ts`: what each node exposes under `$nodes.<name>.`; agent nodes expose `response`/`structuredResponse`(+output-schema fields)/`messages`), and `graph.ts` (`upstreamNodeIds(target, edges)`: a node's ancestor set, so expressions only reference earlier nodes).
 - `condition/` — JSON Logic condition: tree model (`types.ts`), codec (`jsonLogic.ts`), one-line summary (`summarize.ts`), and the editor UI (`ConditionBuilder.tsx`, `ConditionEditor.tsx`).
-- `nodes/` — custom xyflow node components (`StartNode`, `EndNode`, `IfNode` — one target handle, two source handles `true`/`false`) and the `nodeTypes` registry.
-- `*.test.ts` — `bun test` specs for the slice, serializer, constants, and the pure expression/condition modules.
+- `agent/` — agent-node editor: `AgentEditor.tsx` (agent picker, per-input-field expression mapping, output-path input) and pure `inputFields.ts` (`agentInputFields(inputSchema)` → mappable field list).
+- `agents/agentsSlice.ts` — Redux slice + `loadAgents` thunk caching agent configurations (fetched via `@/services/agents`, proxied through `/api/agents`).
+- `schema/json.ts` — shared `isPlainObject` guard.
+- `nodes/` — custom xyflow node components (`StartNode`, `EndNode`, `IfNode` — one target handle, two source handles `true`/`false`; `AgentNode` — one target + one source handle, shows the selected agent name) and the `nodeTypes` registry.
+- `*.test.ts` — `bun test` specs for the slice, serializer, constants, and the pure expression/condition/agent modules.
 
 ## Conventions
 
@@ -33,4 +36,6 @@ The workflow builder feature: a visual graph editor built on `@xyflow/react`, ba
 - A node's `id` is its persisted `name`. Renaming (via the Inspector, for any node except Start/End) goes through `renameNode`, which rewrites every edge that references the node and regenerates edge ids. Names are validated against `nodeName.ts` / `NODE_NAME_PATTERN` (mirror of the chat service) and must be unique. Note: `$nodes.<name>...` references inside *other* nodes' conditions are not auto-rewritten on rename.
 - Variable paths follow the chat service: `$state`/`$config`/`$variables`/`$parameters`/`$nodes.<name>.<path>`/`$trigger`. Keep `constants.ts` in sync with `core/constants/workflow.py`.
 - The workflow's `parameterSchema` (a JSON Schema object) is edited only via `ParametersPanel` and written through the `updateParameterSchema` reducer. Its top-level fields drive `$parameters.<field>` autocomplete (`parameterEntries` → `Inspector` → `ConditionEditor` → `ConditionBuilder` → `ExpressionInput` → `getSuggestions`). The builder represents only scalar fields (`string`/`number`/`integer`/`boolean`); anything else (nested objects, arrays, enums) falls back to JSON editing.
-- Cover slice and serializer changes with `bun test`. UI components have no DOM test infra — extract their logic into pure, tested modules (see `expression/`, `condition/`) and verify the components via `bunx tsc --noEmit`.
+- The agent node (`type: "agent"`) stores camelCase params `agentConfigurationId` / `input` / `output` in `data.parameters`, edited via `AgentEditor` in the Inspector. ⚠️ The chat service is being migrated from snake_case to these camelCase keys (params and node-context output keys); until that lands, saved agent workflows won't round-trip against the live backend. See `AgentNodeField` in `constants.ts`.
+- Expression autocomplete consumes `NodeOutputs[]` (not bare node names): the Inspector computes the selected node's upstream set (`upstreamNodeIds`) and builds agent-aware outputs (`buildNodeOutputs`) before passing them to `ConditionEditor`/`AgentEditor` → `ExpressionInput` → `getSuggestions`. A node can only reference nodes upstream of it.
+- Cover slice and serializer changes with `bun test`. UI components have no DOM test infra — extract their logic into pure, tested modules (see `expression/`, `condition/`, `agent/`) and verify the components via `bunx tsc --noEmit`.
