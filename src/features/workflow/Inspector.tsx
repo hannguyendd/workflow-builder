@@ -1,12 +1,16 @@
 import {
+  useMemo,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import type { WorkflowNodeData } from "@/types/workflow";
-import { NodeType } from "./constants";
+import { AgentNodeField, NodeType } from "./constants";
+import { AgentEditor } from "./agent/AgentEditor";
 import { ConditionEditor } from "./condition/ConditionEditor";
+import { upstreamNodeIds } from "./expression/graph";
+import { buildNodeOutputs, type NodeDescriptor } from "./expression/nodeOutputs";
 import type { JsonLogicValue } from "./expression/operand";
 import { parameterEntries } from "./schema/parameterSchema";
 import { validateNodeName } from "./nodeName";
@@ -30,6 +34,8 @@ interface InspectorProps {
 export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
   const dispatch = useAppDispatch();
   const nodes = useAppSelector((s) => s.workflow.nodes);
+  const edges = useAppSelector((s) => s.workflow.edges);
+  const agentsById = useAppSelector((s) => s.agents.byId);
   const parameterSchema = useAppSelector((s) => s.workflow.meta.parameterSchema);
   const selected = nodes.find((n) => n.selected);
 
@@ -49,8 +55,24 @@ export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
   }
 
   const data = selected?.data as WorkflowNodeData | undefined;
-  const nodeNames = nodes.map((n) => n.id);
   const parameters = parameterEntries(parameterSchema);
+
+  // Only nodes upstream of the selected node are referenceable (a node can't
+  // read a later node's output). Agent nodes carry their return fields.
+  const nodeOutputs = useMemo(() => {
+    if (!selected) return [];
+    const upstream = upstreamNodeIds(selected.id, edges);
+    const descriptors: NodeDescriptor[] = nodes
+      .filter((n) => upstream.has(n.id))
+      .map((n) => ({
+        name: n.id,
+        type: n.type ?? "",
+        agentConfigurationId: (n.data as WorkflowNodeData).parameters?.[
+          AgentNodeField.AGENT_PARAM.AGENT_CONFIGURATION_ID
+        ] as string | undefined,
+      }));
+    return buildNodeOutputs(descriptors, agentsById);
+  }, [selected, edges, nodes, agentsById]);
 
   return (
     <aside
@@ -123,7 +145,7 @@ export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
               <ConditionEditor
                 key={selected.id}
                 condition={(data.parameters?.[CONDITION_KEY] ?? {}) as JsonLogicValue}
-                nodeNames={nodeNames}
+                nodeOutputs={nodeOutputs}
                 parameters={parameters}
                 onChange={(next) =>
                   dispatch(
@@ -133,6 +155,16 @@ export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
                     }),
                   )
                 }
+              />
+            )}
+
+            {selected.type === NodeType.AGENT && (
+              <AgentEditor
+                key={selected.id}
+                parameters={data.parameters}
+                nodeOutputs={nodeOutputs}
+                parameterEntries={parameters}
+                onChange={(d) => dispatch(updateNodeData({ id: selected.id, data: d }))}
               />
             )}
           </>
