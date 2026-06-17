@@ -4,7 +4,7 @@ Redux Toolkit store wiring. Global app state lives here; feature reducers live w
 
 ## Files
 
-- `index.ts` — `configureStore` with the root reducer map (currently `{ workflow }`). Exports `store`, `RootState`, and `AppDispatch`. Register new feature reducers here.
+- `index.ts` — `configureStore` with the root reducer map (`workflow`, `theme`, `agents`). Exports `store`, `RootState`, and `AppDispatch`. Register new feature reducers here.
 - `hooks.ts` — typed `useAppDispatch` / `useAppSelector` (via `withTypes`). **Always use these instead of the raw react-redux hooks** so selectors and dispatch stay typed.
 
 ## Conventions
