@@ -1,8 +1,11 @@
 import type { NodeTypes } from "@xyflow/react";
+import { NodeType } from "../constants";
 import { EndNode } from "./EndNode";
+import { IfNode } from "./IfNode";
 import { StartNode } from "./StartNode";
 
 export const nodeTypes: NodeTypes = {
-  start: StartNode,
-  end: EndNode,
+  [NodeType.START]: StartNode,
+  [NodeType.END]: EndNode,
+  [NodeType.IF]: IfNode,
 };
