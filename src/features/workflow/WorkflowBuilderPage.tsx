@@ -6,13 +6,13 @@ import { setWorkflow } from "./workflowSlice";
 import { Toolbar } from "./Toolbar";
 import { WorkflowCanvas } from "./WorkflowCanvas";
 import { Sidebar } from "./Sidebar";
-import { Inspector, INSPECTOR_DEFAULT_WIDTH } from "./Inspector";
+import { Inspector, INSPECTOR_DEFAULT_HEIGHT } from "./Inspector";
 
 export function WorkflowBuilderPage() {
   const dispatch = useAppDispatch();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [inspectorWidth, setInspectorWidth] = useState(INSPECTOR_DEFAULT_WIDTH);
+  const [inspectorHeight, setInspectorHeight] = useState(INSPECTOR_DEFAULT_HEIGHT);
 
   useEffect(() => {
     loadWorkflow()
@@ -33,16 +33,18 @@ export function WorkflowBuilderPage() {
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1">
           <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((c) => !c)} />
-          <div className="min-w-0 flex-1">
-            <WorkflowCanvas />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1">
+              <WorkflowCanvas />
+            </div>
+            {inspectorOpen && (
+              <Inspector
+                height={inspectorHeight}
+                onHeightChange={setInspectorHeight}
+                onClose={() => setInspectorOpen(false)}
+              />
+            )}
           </div>
-          {inspectorOpen && (
-            <Inspector
-              width={inspectorWidth}
-              onWidthChange={setInspectorWidth}
-              onClose={() => setInspectorOpen(false)}
-            />
-          )}
         </div>
       </ReactFlowProvider>
     </div>

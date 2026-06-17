@@ -13,29 +13,29 @@ import { renameNode, updateNodeData } from "./workflowSlice";
 
 const CONDITION_KEY = "condition";
 
-/** Resizable-panel width bounds (px). */
-export const INSPECTOR_MIN_WIDTH = 240;
-export const INSPECTOR_MAX_WIDTH = 560;
-export const INSPECTOR_DEFAULT_WIDTH = 288;
+/** Resizable-panel height bounds (px). */
+export const INSPECTOR_MIN_HEIGHT = 160;
+export const INSPECTOR_MAX_HEIGHT = 560;
+export const INSPECTOR_DEFAULT_HEIGHT = 240;
 
-const clamp = (n: number) => Math.min(INSPECTOR_MAX_WIDTH, Math.max(INSPECTOR_MIN_WIDTH, n));
+const clamp = (n: number) => Math.min(INSPECTOR_MAX_HEIGHT, Math.max(INSPECTOR_MIN_HEIGHT, n));
 
 interface InspectorProps {
-  width: number;
-  onWidthChange: (width: number) => void;
+  height: number;
+  onHeightChange: (height: number) => void;
   onClose: () => void;
 }
 
-export function Inspector({ width, onWidthChange, onClose }: InspectorProps) {
+export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
   const dispatch = useAppDispatch();
   const nodes = useAppSelector((s) => s.workflow.nodes);
   const selected = nodes.find((n) => n.selected);
 
-  // Panel is anchored to the right edge, so its width grows as the pointer
-  // moves left: width = viewport width - pointer x.
+  // Panel is anchored to the bottom edge, so its height grows as the pointer
+  // moves up: height = viewport height - pointer y.
   function startResize(e: ReactPointerEvent<HTMLDivElement>) {
     e.preventDefault();
-    const onMove = (ev: PointerEvent) => onWidthChange(clamp(window.innerWidth - ev.clientX));
+    const onMove = (ev: PointerEvent) => onHeightChange(clamp(window.innerHeight - ev.clientY));
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
@@ -51,15 +51,15 @@ export function Inspector({ width, onWidthChange, onClose }: InspectorProps) {
 
   return (
     <aside
-      style={{ width }}
-      className="relative flex shrink-0 flex-col border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      style={{ height }}
+      className="relative flex w-full shrink-0 flex-col border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
     >
       <div
         onPointerDown={startResize}
         role="separator"
-        aria-orientation="vertical"
+        aria-orientation="horizontal"
         aria-label="Resize inspector"
-        className="absolute inset-y-0 left-0 z-10 w-1.5 -translate-x-1/2 cursor-col-resize hover:bg-primary/40"
+        className="absolute inset-x-0 top-0 z-10 h-1.5 -translate-y-1/2 cursor-row-resize hover:bg-primary/40"
       />
 
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-slate-800">
