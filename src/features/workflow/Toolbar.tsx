@@ -14,9 +14,16 @@ const btnActive =
 interface ToolbarProps {
   inspectorOpen: boolean;
   onToggleInspector: () => void;
+  parametersOpen: boolean;
+  onToggleParameters: () => void;
 }
 
-export function Toolbar({ inspectorOpen, onToggleInspector }: ToolbarProps) {
+export function Toolbar({
+  inspectorOpen,
+  onToggleInspector,
+  parametersOpen,
+  onToggleParameters,
+}: ToolbarProps) {
   const dispatch = useAppDispatch();
   const workflow = useAppSelector((s) => s.workflow);
   const [status, setStatus] = useState("");
@@ -49,6 +56,14 @@ export function Toolbar({ inspectorOpen, onToggleInspector }: ToolbarProps) {
       <span className="mr-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Workflow Builder</span>
       <span className="flex-1" />
       <span className="mr-2 text-xs text-slate-400 dark:text-slate-500">{status}</span>
+      <button
+        className={parametersOpen ? btnActive : btn}
+        onClick={onToggleParameters}
+        aria-pressed={parametersOpen}
+        title="Toggle parameters panel"
+      >
+        Parameters
+      </button>
       <button
         className={inspectorOpen ? btnActive : btn}
         onClick={onToggleInspector}

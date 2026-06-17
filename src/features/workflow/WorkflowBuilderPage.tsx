@@ -7,12 +7,15 @@ import { Toolbar } from "./Toolbar";
 import { WorkflowCanvas } from "./WorkflowCanvas";
 import { Sidebar } from "./Sidebar";
 import { Inspector, INSPECTOR_DEFAULT_HEIGHT } from "./Inspector";
+import { ParametersPanel, PARAMETERS_DEFAULT_WIDTH } from "./ParametersPanel";
 
 export function WorkflowBuilderPage() {
   const dispatch = useAppDispatch();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [inspectorHeight, setInspectorHeight] = useState(INSPECTOR_DEFAULT_HEIGHT);
+  const [parametersOpen, setParametersOpen] = useState(false);
+  const [parametersWidth, setParametersWidth] = useState(PARAMETERS_DEFAULT_WIDTH);
 
   useEffect(() => {
     loadWorkflow()
@@ -29,6 +32,8 @@ export function WorkflowBuilderPage() {
       <Toolbar
         inspectorOpen={inspectorOpen}
         onToggleInspector={() => setInspectorOpen((o) => !o)}
+        parametersOpen={parametersOpen}
+        onToggleParameters={() => setParametersOpen((o) => !o)}
       />
       <ReactFlowProvider>
         <div className="flex min-h-0 flex-1">
@@ -45,6 +50,13 @@ export function WorkflowBuilderPage() {
               />
             )}
           </div>
+          {parametersOpen && (
+            <ParametersPanel
+              width={parametersWidth}
+              onWidthChange={setParametersWidth}
+              onClose={() => setParametersOpen(false)}
+            />
+          )}
         </div>
       </ReactFlowProvider>
     </div>
