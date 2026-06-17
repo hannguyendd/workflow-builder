@@ -62,6 +62,17 @@ test("addNode('if') seeds a default condition", () => {
   expect((ifNode!.data as WorkflowNodeData).parameters).toEqual({ condition: defaultCondition() });
 });
 
+test("addNode('agent') seeds empty camelCase agent params", () => {
+  const state = reducer(undefined, addNode({ type: "agent" }));
+  const node = state.nodes.find((n) => n.type === "agent");
+  expect(node).toBeDefined();
+  expect((node!.data as WorkflowNodeData).parameters).toEqual({
+    agentConfigurationId: "",
+    input: {},
+    output: "",
+  });
+});
+
 test("connected derives the edge label from the source handle", () => {
   const base = reducer(undefined, addNode({ type: "if" }));
   const next = reducer(

@@ -12,5 +12,6 @@ export interface PaletteItem {
 export const PALETTE_ITEMS: PaletteItem[] = [
   { type: NodeType.START, label: "Start" },
   { type: NodeType.IF, label: "If / Condition" },
+  { type: NodeType.AGENT, label: "Agent" },
   { type: NodeType.END, label: "End" },
 ];
