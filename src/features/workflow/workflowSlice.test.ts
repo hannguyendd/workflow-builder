@@ -1,5 +1,11 @@
 import { test, expect } from "bun:test";
-import reducer, { addNode, connected, setWorkflow, updateNodeData } from "./workflowSlice";
+import reducer, {
+  addNode,
+  connected,
+  renameNode,
+  setWorkflow,
+  updateNodeData,
+} from "./workflowSlice";
 import { defaultCondition } from "./condition/jsonLogic";
 import type { WorkflowDto, WorkflowNodeData } from "@/types/workflow";
 
@@ -80,4 +86,41 @@ test("updateNodeData merges into the node's data", () => {
   const next = reducer(base, updateNodeData({ id: "if", data: { description: "branch on age" } }));
   const node = next.nodes.find((n) => n.id === "if");
   expect((node!.data as WorkflowNodeData).description).toBe("branch on age");
+});
+
+test("renameNode renames the node and rewrites edges that reference it", () => {
+  let state = reducer(undefined, addNode({ type: "if" }));
+  state = reducer(
+    state,
+    connected({ source: "start", target: "if", sourceHandle: null, targetHandle: null }),
+  );
+  state = reducer(
+    state,
+    connected({ source: "if", target: "end", sourceHandle: "true", targetHandle: null }),
+  );
+
+  const next = reducer(state, renameNode({ id: "if", name: "age_gate" }));
+
+  expect(next.nodes.find((n) => n.id === "if")).toBeUndefined();
+  expect(next.nodes.find((n) => n.id === "age_gate")).toBeDefined();
+  const incoming = next.edges.find((e) => e.source === "start");
+  const outgoing = next.edges.find((e) => e.target === "end");
+  expect(incoming?.target).toBe("age_gate");
+  expect(incoming?.id).toBe("start->age_gate:main");
+  expect(outgoing?.source).toBe("age_gate");
+  expect(outgoing?.id).toBe("age_gate->end:true");
+  expect(outgoing?.label).toBe("true");
+});
+
+test("renameNode is a no-op for a duplicate name", () => {
+  const state = reducer(undefined, addNode({ type: "if" }));
+  const next = reducer(state, renameNode({ id: "if", name: "end" }));
+  expect(next.nodes.find((n) => n.id === "if")).toBeDefined();
+  expect(next.nodes.filter((n) => n.id === "end")).toHaveLength(1);
+});
+
+test("renameNode is a no-op for an invalid name", () => {
+  const state = reducer(undefined, addNode({ type: "if" }));
+  const next = reducer(state, renameNode({ id: "if", name: "x" })); // too short
+  expect(next.nodes.find((n) => n.id === "if")).toBeDefined();
 });

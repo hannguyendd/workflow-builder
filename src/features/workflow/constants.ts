@@ -31,3 +31,17 @@ export const CONTEXT_SOURCES = [
   "$nodes",
   "$trigger",
 ] as const;
+
+/**
+ * Node-name rules — mirror of `core/constants/workflow.py`. The chat service's
+ * `NodeBuilder.build()` rejects names that don't match `NODE_NAME_PATTERN`, so
+ * the editor enforces the same rule to avoid save-time failures.
+ */
+export const NODE_NAME_MIN_LENGTH = 3;
+export const NODE_NAME_MAX_LENGTH = 40;
+export const NODE_NAME_PATTERN = new RegExp(
+  `^[A-Za-z0-9][A-Za-z0-9_ \\-]{${NODE_NAME_MIN_LENGTH - 1},${NODE_NAME_MAX_LENGTH - 1}}$`,
+);
+export const NODE_NAME_RULE_TEXT =
+  `must start with a letter or digit and be ${NODE_NAME_MIN_LENGTH}-${NODE_NAME_MAX_LENGTH} ` +
+  "characters long, using only letters, digits, underscores, hyphens, and spaces";

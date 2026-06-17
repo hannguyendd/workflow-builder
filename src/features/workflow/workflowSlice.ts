@@ -13,6 +13,7 @@ import type { SerializableWorkflow, WorkflowDto, WorkflowNodeData } from "@/type
 import { fromWorkflowDto } from "./serialize";
 import { NodeType, EdgeLabel } from "./constants";
 import { defaultCondition } from "./condition/jsonLogic";
+import { validateNodeName } from "./nodeName";
 
 export type WorkflowState = SerializableWorkflow;
 
@@ -82,6 +83,25 @@ const slice = createSlice({
       const node = state.nodes.find((n) => n.id === id);
       if (node) node.data = { ...(node.data as WorkflowNodeData), ...data };
     },
+    // A node's id is its persisted name, and edges reference nodes by id, so a
+    // rename rewrites every edge that touches the node (and its derived id).
+    // Invalid or duplicate names are ignored — the inspector surfaces the error.
+    renameNode(state, action: PayloadAction<{ id: string; name: string }>) {
+      const { id, name } = action.payload;
+      if (name === id) return;
+      const takenIds = state.nodes.filter((n) => n.id !== id).map((n) => n.id);
+      if (validateNodeName(name, takenIds) !== null) return;
+      const node = state.nodes.find((n) => n.id === id);
+      if (!node) return;
+      node.id = name;
+      for (const e of state.edges) {
+        if (e.source !== id && e.target !== id) continue;
+        if (e.source === id) e.source = name;
+        if (e.target === id) e.target = name;
+        const label = typeof e.label === "string" ? e.label : EdgeLabel.MAIN;
+        e.id = `${e.source}->${e.target}:${label}`;
+      }
+    },
     setWorkflow(state, action: PayloadAction<WorkflowDto>) {
       const wf = fromWorkflowDto(action.payload);
       state.meta = wf.meta;
@@ -91,6 +111,13 @@ const slice = createSlice({
   },
 });
 
-export const { nodesChanged, edgesChanged, connected, addNode, updateNodeData, setWorkflow } =
-  slice.actions;
+export const {
+  nodesChanged,
+  edgesChanged,
+  connected,
+  addNode,
+  updateNodeData,
+  renameNode,
+  setWorkflow,
+} = slice.actions;
 export default slice.reducer;

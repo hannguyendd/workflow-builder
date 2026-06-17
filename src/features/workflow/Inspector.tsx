@@ -1,10 +1,15 @@
-import { type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import type { WorkflowNodeData } from "@/types/workflow";
 import { NodeType } from "./constants";
 import { ConditionEditor } from "./condition/ConditionEditor";
 import type { JsonLogicValue } from "./expression/operand";
-import { updateNodeData } from "./workflowSlice";
+import { validateNodeName } from "./nodeName";
+import { renameNode, updateNodeData } from "./workflowSlice";
 
 const CONDITION_KEY = "condition";
 
@@ -76,13 +81,22 @@ export function Inspector({ width, onWidthChange, onClose }: InspectorProps) {
           <p className="text-sm text-slate-400">Select a node to edit it.</p>
         ) : (
           <>
-            <div>
+            <div className="flex flex-col gap-1">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 Node
               </p>
-              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                {selected.id}
-              </p>
+              {selected.type === NodeType.START || selected.type === NodeType.END ? (
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                  {selected.id}
+                </p>
+              ) : (
+                <NodeNameField
+                  key={selected.id}
+                  nodeId={selected.id}
+                  takenIds={nodes.filter((n) => n.id !== selected.id).map((n) => n.id)}
+                  onRename={(name) => dispatch(renameNode({ id: selected.id, name }))}
+                />
+              )}
               <p className="text-xs text-slate-400">{selected.type}</p>
             </div>
 
@@ -121,5 +135,52 @@ export function Inspector({ width, onWidthChange, onClose }: InspectorProps) {
         )}
       </div>
     </aside>
+  );
+}
+
+interface NodeNameFieldProps {
+  nodeId: string;
+  takenIds: string[];
+  onRename: (name: string) => void;
+}
+
+/**
+ * Editable node name. Commits on blur / Enter (not per keystroke, since a
+ * rename rewrites edges); Escape reverts. Renaming a node changes its id, so
+ * this field is remounted via `key={nodeId}` after a successful rename.
+ */
+function NodeNameField({ nodeId, takenIds, onRename }: NodeNameFieldProps) {
+  const [value, setValue] = useState(nodeId);
+  const error = value === nodeId ? null : validateNodeName(value, takenIds);
+
+  function commit() {
+    if (value !== nodeId && validateNodeName(value, takenIds) === null) onRename(value);
+  }
+
+  function onKeyDown(e: ReactKeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      setValue(nodeId);
+    }
+  }
+
+  return (
+    <>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        aria-invalid={error !== null}
+        aria-label="Node name"
+        className={`rounded-md border bg-white px-2 py-1 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-100 ${
+          error ? "border-rose-400" : "border-slate-300 dark:border-slate-700"
+        }`}
+      />
+      {error && <span className="text-xs text-rose-500">{error}</span>}
+    </>
   );
 }
