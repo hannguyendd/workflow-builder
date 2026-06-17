@@ -1,10 +1,12 @@
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { getSuggestions } from "../expression/suggestions";
+import type { ParameterEntry } from "../schema/parameterSchema";
 
 interface ExpressionInputProps {
   value: string;
   onChange: (value: string) => void;
   nodeNames: string[];
+  parameters: ParameterEntry[];
   placeholder?: string;
   className?: string;
 }
@@ -15,13 +17,17 @@ export function ExpressionInput({
   value,
   onChange,
   nodeNames,
+  parameters,
   placeholder,
   className,
 }: ExpressionInputProps) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const listId = useId();
-  const suggestions = useMemo(() => getSuggestions(value, nodeNames), [value, nodeNames]);
+  const suggestions = useMemo(
+    () => getSuggestions(value, nodeNames, parameters),
+    [value, nodeNames, parameters],
+  );
   const visible = open && suggestions.length > 0;
 
   function accept(index: number) {

@@ -8,6 +8,7 @@ import type { WorkflowNodeData } from "@/types/workflow";
 import { NodeType } from "./constants";
 import { ConditionEditor } from "./condition/ConditionEditor";
 import type { JsonLogicValue } from "./expression/operand";
+import { parameterEntries } from "./schema/parameterSchema";
 import { validateNodeName } from "./nodeName";
 import { renameNode, updateNodeData } from "./workflowSlice";
 
@@ -29,6 +30,7 @@ interface InspectorProps {
 export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
   const dispatch = useAppDispatch();
   const nodes = useAppSelector((s) => s.workflow.nodes);
+  const parameterSchema = useAppSelector((s) => s.workflow.meta.parameterSchema);
   const selected = nodes.find((n) => n.selected);
 
   // Panel is anchored to the bottom edge, so its height grows as the pointer
@@ -48,6 +50,7 @@ export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
 
   const data = selected?.data as WorkflowNodeData | undefined;
   const nodeNames = nodes.map((n) => n.id);
+  const parameters = parameterEntries(parameterSchema);
 
   return (
     <aside
@@ -121,6 +124,7 @@ export function Inspector({ height, onHeightChange, onClose }: InspectorProps) {
                 key={selected.id}
                 condition={(data.parameters?.[CONDITION_KEY] ?? {}) as JsonLogicValue}
                 nodeNames={nodeNames}
+                parameters={parameters}
                 onChange={(next) =>
                   dispatch(
                     updateNodeData({
