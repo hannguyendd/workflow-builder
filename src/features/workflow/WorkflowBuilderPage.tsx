@@ -6,6 +6,7 @@ import { setWorkflow } from "./workflowSlice";
 import { Toolbar } from "./Toolbar";
 import { WorkflowCanvas } from "./WorkflowCanvas";
 import { Sidebar } from "./Sidebar";
+import { Inspector } from "./Inspector";
 
 export function WorkflowBuilderPage() {
   const dispatch = useAppDispatch();
@@ -30,6 +31,7 @@ export function WorkflowBuilderPage() {
           <div className="min-w-0 flex-1">
             <WorkflowCanvas />
           </div>
+          <Inspector />
         </div>
       </ReactFlowProvider>
     </div>
