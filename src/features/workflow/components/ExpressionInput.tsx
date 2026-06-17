@@ -1,11 +1,12 @@
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
 import { getSuggestions } from "../expression/suggestions";
+import type { NodeOutputs } from "../expression/nodeOutputs";
 import type { ParameterEntry } from "../schema/parameterSchema";
 
 interface ExpressionInputProps {
   value: string;
   onChange: (value: string) => void;
-  nodeNames: string[];
+  nodeOutputs: NodeOutputs[];
   parameters: ParameterEntry[];
   placeholder?: string;
   className?: string;
@@ -16,7 +17,7 @@ const BLUR_CLOSE_MS = 120;
 export function ExpressionInput({
   value,
   onChange,
-  nodeNames,
+  nodeOutputs,
   parameters,
   placeholder,
   className,
@@ -25,8 +26,8 @@ export function ExpressionInput({
   const [active, setActive] = useState(0);
   const listId = useId();
   const suggestions = useMemo(
-    () => getSuggestions(value, nodeNames, parameters),
-    [value, nodeNames, parameters],
+    () => getSuggestions(value, nodeOutputs, parameters),
+    [value, nodeOutputs, parameters],
   );
   const visible = open && suggestions.length > 0;
 
