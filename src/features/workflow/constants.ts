@@ -8,8 +8,32 @@ export const NodeType = {
   START: "start",
   END: "end",
   IF: "if",
+  AGENT: "agent",
 } as const;
 export type NodeTypeValue = (typeof NodeType)[keyof typeof NodeType];
+
+/**
+ * Field keys for the agent node — mirror of `AgentNodeField` in the chat
+ * service's `core/constants/workflow.py`, BUT intentionally camelCase.
+ * The chat service is currently snake_case (`agent_configuration_id`,
+ * `structured_response`); it will be migrated to these camelCase keys so the
+ * builder's saved params load and `$nodes.<name>.structuredResponse` resolves
+ * at runtime. Keep this comment until that backend change lands.
+ */
+export const AgentNodeField = {
+  /** Persisted node parameters (read by AgentNode on the backend). */
+  AGENT_PARAM: {
+    AGENT_CONFIGURATION_ID: "agentConfigurationId",
+    INPUT: "input",
+    OUTPUT: "output",
+  },
+  /** Fields exposed under `$nodes.<name>.` after the node runs. */
+  AGENT_OUTPUT: {
+    RESPONSE: "response",
+    STRUCTURED_RESPONSE: "structuredResponse",
+    MESSAGES: "messages",
+  },
+} as const;
 
 /** Common edge label shared across node types (EdgeLabel). */
 export const EdgeLabel = {
