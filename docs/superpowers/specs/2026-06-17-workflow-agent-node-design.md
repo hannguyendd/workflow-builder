@@ -21,10 +21,12 @@ nodes that come **before** it in the graph.
 Backend `AgentNode`
 (`taggle-ext-chat/packages/service/service/workflows/nodes/agent.py`):
 
-- **Parameters** (snake_case — consumed by `AgentNode.__init__` / emitted by
-  `to_dict`): `agent_configuration_id` (UUID string), `input` (dict of
-  expressions whose keys match the agent's `input_schema`; `messages` is special
-  and used for `ainvoke`), `output` (a state path where the result is written).
+- **Parameters** (currently snake_case in the backend — consumed by
+  `AgentNode.__init__` / emitted by `to_dict`): `agent_configuration_id` (UUID
+  string), `input` (dict of expressions whose keys match the agent's
+  `input_schema`; `messages` is special and used for `ainvoke`), `output` (a
+  state path where the result is written). Per the decision below these move to
+  camelCase on both sides.
 - **Output context** (stored under `node_context[node_name]`, currently
   snake_case in the backend): `response` (str), `structured_response`
   (dict, shaped by the agent's optional `output_schema`, else `None`),
@@ -56,15 +58,16 @@ serializes once its parameters are seeded/edited. Autocomplete flows
   tenant header server-side, avoids CORS).
 - **Output autocomplete depth:** top-level fields **plus**
   `structuredResponse.<field>` drawn from the agent's `outputSchema`.
-- **Returned field names are camelCase:** `response`, `structuredResponse`,
-  `messages`. ⚠️ The chat service currently emits snake_case
-  (`structured_response`); it will be updated to camelCase so the saved
-  `$nodes.x.structuredResponse` references resolve at runtime. This is a
-  **backend dependency**, flagged in code comments.
+- **Everything camelCase, both parameters and returned fields.** Param keys:
+  `agentConfigurationId`, `input`, `output`. Returned fields: `response`,
+  `structuredResponse`, `messages`. ⚠️ The chat service is currently snake_case
+  on both (`agent_configuration_id` in `AgentNode.__init__` / `to_dict`,
+  `structured_response` in node-context); it will be updated to camelCase so the
+  saved node parameters load and `$nodes.x.structuredResponse` references
+  resolve at runtime. This is a **backend dependency** (both the `NodeBuilder`
+  param reads and the node-context output keys), flagged in code comments.
 - **Upstream-only node references apply globally** — to every expression input,
   including the existing if-node condition editor.
-- Node **parameters stay snake_case** (constructor contract); only the
-  *returned* output fields are camelCase.
 - The agent dropdown lists **all** agents (no `status` filter) so drafts are
   usable during development.
 - `output` is a **plain path text input**, not an expression field.
@@ -74,13 +77,13 @@ serializes once its parameters are seeded/edited. Autocomplete flows
 ### Constants (`features/workflow/constants.ts` + `constants.test.ts`)
 
 - Add `AGENT: "agent"` to `NodeType`.
-- Add an `AgentNodeField` mirror in two parts:
-  - `AGENT_PARAM` (snake_case): `AGENT_CONFIGURATION_ID = "agent_configuration_id"`,
+- Add an `AgentNodeField` mirror in two parts (all camelCase):
+  - `AGENT_PARAM`: `AGENT_CONFIGURATION_ID = "agentConfigurationId"`,
     `INPUT = "input"`, `OUTPUT = "output"`.
-  - `AGENT_OUTPUT` (camelCase): `RESPONSE = "response"`,
+  - `AGENT_OUTPUT`: `RESPONSE = "response"`,
     `STRUCTURED_RESPONSE = "structuredResponse"`, `MESSAGES = "messages"`.
 - `constants.test.ts` asserts the new values. Code comment notes the backend
-  camelCase dependency for the output keys.
+  camelCase dependency for both the param keys and the output keys.
 
 ### Agent data layer
 
@@ -107,7 +110,7 @@ serializes once its parameters are seeded/edited. Autocomplete flows
   agent's name (or "No agent selected"), and the output path. Registered in
   `nodes/nodeTypes.ts` and added to `PALETTE_ITEMS` in `nodes/dragData.ts`.
 - `nodeData(AGENT)` seed in `workflowSlice.ts`:
-  `{ description: "", parameters: { agent_configuration_id: "", input: {}, output: "" } }`.
+  `{ description: "", parameters: { agentConfigurationId: "", input: {}, output: "" } }`.
   Serializer unchanged.
 
 ### Agent inspector editor (`features/workflow/agent/`)
@@ -116,7 +119,7 @@ Rendered by `Inspector.tsx` when `selected.type === NodeType.AGENT`:
 
 - **`AgentEditor.tsx`** —
   - Agent select (filterable) from the agents store → dispatches
-    `updateNodeData` setting `parameters.agent_configuration_id`. Shows
+    `updateNodeData` setting `parameters.agentConfigurationId`. Shows
     loading / empty / error states from the slice `status`.
   - Input mapping: one `ExpressionInput` per agent input field, bound to
     `parameters.input[fieldName]`; required fields (incl. `messages`) flagged
@@ -167,7 +170,7 @@ Inspector
   ├─ upstreamNodeIds(selected.id, edges) ──▶ buildNodeOutputs(upstream, agents)
   ├─ if  node → ConditionEditor(nodeOutputs, parameters)
   └─ agent node → AgentEditor(agent, nodeOutputs, parameters)
-        ├─ agent select        → updateNodeData(parameters.agent_configuration_id)
+        ├─ agent select        → updateNodeData(parameters.agentConfigurationId)
         ├─ input field inputs  → updateNodeData(parameters.input[field])  [ExpressionInput → getSuggestions(nodeOutputs)]
         └─ output path input   → updateNodeData(parameters.output)
 ```
@@ -179,7 +182,7 @@ Inspector
 - `listAgents` throws on non-OK (convention); the thunk maps rejection to
   `status: "error"`.
 - Selecting an agent then editing the workflow when the agent list later fails
-  to refresh: the stored `agent_configuration_id` is preserved; if the id is no
+  to refresh: the stored `agentConfigurationId` is preserved; if the id is no
   longer in `byId`, the select shows the raw id and input mapping falls back to
   "agent unavailable" (no field rows), leaving `parameters.input` untouched.
 
@@ -196,7 +199,7 @@ Pure + `bun test`:
 - `expression/suggestions.test.ts` — updated for the `NodeOutputs[]` signature
   and field/child drilling.
 - `constants.test.ts` — `AGENT` + `AgentNodeField` values.
-- `workflowSlice.test.ts` — `addNode("agent")` seeds the snake_case params.
+- `workflowSlice.test.ts` — `addNode("agent")` seeds the camelCase params.
 - `serialize.test.ts` — an agent node round-trips.
 
 Components (`AgentNode`, `AgentEditor`, edited `Inspector`/`ConditionEditor`/
