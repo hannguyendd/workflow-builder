@@ -23,7 +23,11 @@
     "noImplicitOverride": true,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@features/*": ["./src/features/*"],
+      "@services/*": ["./src/services/*"],
+      "@store/*": ["./src/store/*"],
+      "@types/*": ["./src/types/*"]
     },
 
     // Some stricter flags (disabled by default)
