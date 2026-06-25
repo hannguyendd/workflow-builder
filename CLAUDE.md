@@ -52,6 +52,13 @@ Path alias: `@/*` → `./src/*`, plus `@features/*`, `@services/*`, `@store/*`, 
 
 Bun API docs are available locally in `node_modules/bun-types/docs/**.mdx`.
 
+## Tailwind conventions
+
+- **Prefer Canonical Classes:** Prefer Tailwind's canonical utility names and a consistent canonical ordering when writing class lists to improve readability and produce deterministic diffs. Use `prettier-plugin-tailwindcss` to auto-sort classes where possible.
+- **Use `cn` + `twMerge`:** For conditional or dynamic classes, use a small helper that composes a `clsx`-style helper with `tailwind-merge` (`twMerge`) to deduplicate and resolve conflicting utilities. Example pattern: `const cn = (...args) => twMerge(clsx(...args))`.
+- **Tooling:** Enforce ordering and de-duplication via `prettier-plugin-tailwindcss` and `tailwind-merge` in your editor/CI where practical.
+- **Readability:** Group classes by concern (layout → positioning → box-model → spacing → typography → backgrounds → borders → effects) to keep class lists consistent and easy to scan.
+
 ## Commit convention
 
 Conventional Commits — **see [`constitution/commit-convention.md`](constitution/commit-convention.md)** for the full type list and rules. Format: `<type>(<scope>): <description>`, imperative present tense, lowercase, no trailing period (e.g. `feat(workflow): add drag-to-connect for nodes`).

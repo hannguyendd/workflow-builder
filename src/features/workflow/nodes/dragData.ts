@@ -1,3 +1,5 @@
+import { NodeType } from "../constants";
+
 /** Mime type carrying a node type through an HTML drag-and-drop. */
 export const NODE_DRAG_MIME = "application/workflow-node-type";
 
@@ -8,6 +10,7 @@ export interface PaletteItem {
 }
 
 export const PALETTE_ITEMS: PaletteItem[] = [
-  { type: "start", label: "Start" },
-  { type: "end", label: "End" },
+  { type: NodeType.START, label: "Start" },
+  { type: NodeType.IF, label: "If / Condition" },
+  { type: NodeType.END, label: "End" },
 ];

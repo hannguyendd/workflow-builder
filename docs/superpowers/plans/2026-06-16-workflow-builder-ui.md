@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-06-16-workflow-builder-ui-design.md`
 
 **Conventions:**
+
 - Import via the `@/*` alias (→ `./src/*`).
 - Conventional Commits, scope `workflow`.
 - End each commit message with the trailer:
@@ -21,6 +22,7 @@
 ### Task 1: Workflow types + ignore the data file
 
 **Files:**
+
 - Create: `src/types/workflow.ts`
 - Modify: `.gitignore`
 
@@ -110,6 +112,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 2: Serializer (xyflow ⇄ JSON schema) — TDD
 
 **Files:**
+
 - Create: `src/features/workflow/serialize.ts`
 - Test: `src/features/workflow/serialize.test.ts`
 
@@ -127,8 +130,20 @@ const sample: WorkflowDto = {
   description: "desc",
   parameterSchema: { type: "object", properties: {}, required: [] },
   nodes: [
-    { name: "start", type: "start", description: "Workflow entry point", parameters: {}, position: { x: 300, y: 0 } },
-    { name: "end", type: "end", description: "Workflow end", parameters: {}, position: { x: 300, y: 300 } },
+    {
+      name: "start",
+      type: "start",
+      description: "Workflow entry point",
+      parameters: {},
+      position: { x: 300, y: 0 },
+    },
+    {
+      name: "end",
+      type: "end",
+      description: "Workflow end",
+      parameters: {},
+      position: { x: 300, y: 300 },
+    },
   ],
   edges: {
     start: [{ to: "end", label: "main" }],
@@ -140,7 +155,10 @@ test("fromWorkflowDto maps names to ids and edges to a flat list", () => {
   expect(wf.meta.name).toBe("Sample");
   expect(wf.nodes.map((n) => n.id)).toEqual(["start", "end"]);
   expect(wf.nodes[0]!.type).toBe("start");
-  expect(wf.nodes[0]!.data).toEqual({ description: "Workflow entry point", parameters: {} });
+  expect(wf.nodes[0]!.data).toEqual({
+    description: "Workflow entry point",
+    parameters: {},
+  });
   expect(wf.edges).toHaveLength(1);
   expect(wf.edges[0]!.source).toBe("start");
   expect(wf.edges[0]!.target).toBe("end");
@@ -198,7 +216,10 @@ export function fromWorkflowDto(dto: WorkflowDto): SerializableWorkflow {
     id: n.name,
     type: n.type,
     position: { x: n.position.x, y: n.position.y },
-    data: { description: n.description, parameters: n.parameters } satisfies WorkflowNodeData,
+    data: {
+      description: n.description,
+      parameters: n.parameters,
+    } satisfies WorkflowNodeData,
   }));
 
   const edges: Edge[] = [];
@@ -215,7 +236,11 @@ export function fromWorkflowDto(dto: WorkflowDto): SerializableWorkflow {
   }
 
   return {
-    meta: { name: dto.name, description: dto.description, parameterSchema: dto.parameterSchema },
+    meta: {
+      name: dto.name,
+      description: dto.description,
+      parameterSchema: dto.parameterSchema,
+    },
     nodes,
     edges,
   };
@@ -246,6 +271,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 3: Redux slice — TDD
 
 **Files:**
+
 - Create: `src/features/workflow/workflowSlice.ts`
 - Test: `src/features/workflow/workflowSlice.test.ts`
 
@@ -258,7 +284,11 @@ import { test, expect } from "bun:test";
 import reducer, { addNode, connected, setWorkflow } from "./workflowSlice";
 import type { WorkflowDto } from "@/types/workflow";
 
-const empty = { meta: { name: "x", description: "", parameterSchema: {} }, nodes: [], edges: [] };
+const empty = {
+  meta: { name: "x", description: "", parameterSchema: {} },
+  nodes: [],
+  edges: [],
+};
 
 test("addNode appends a node whose id equals its type when unused", () => {
   const next = reducer(empty, addNode({ type: "start" }));
@@ -274,7 +304,15 @@ test("addNode generates a unique id when the type id is taken", () => {
 });
 
 test("connected adds an edge labelled main", () => {
-  const next = reducer(empty, connected({ source: "start", target: "end", sourceHandle: null, targetHandle: null }));
+  const next = reducer(
+    empty,
+    connected({
+      source: "start",
+      target: "end",
+      sourceHandle: null,
+      targetHandle: null,
+    }),
+  );
   expect(next.edges).toHaveLength(1);
   expect(next.edges[0]!.source).toBe("start");
   expect(next.edges[0]!.target).toBe("end");
@@ -283,8 +321,18 @@ test("connected adds an edge labelled main", () => {
 
 test("setWorkflow replaces state from a dto", () => {
   const dto: WorkflowDto = {
-    name: "Loaded", description: "d", parameterSchema: {},
-    nodes: [{ name: "start", type: "start", description: "Workflow entry point", parameters: {}, position: { x: 0, y: 0 } }],
+    name: "Loaded",
+    description: "d",
+    parameterSchema: {},
+    nodes: [
+      {
+        name: "start",
+        type: "start",
+        description: "Workflow entry point",
+        parameters: {},
+        position: { x: 0, y: 0 },
+      },
+    ],
     edges: {},
   };
   const next = reducer(empty, setWorkflow(dto));
@@ -315,25 +363,52 @@ import {
   type Node,
   type NodeChange,
 } from "@xyflow/react";
-import type { SerializableWorkflow, WorkflowDto, WorkflowNodeData } from "@/types/workflow";
+import type {
+  SerializableWorkflow,
+  WorkflowDto,
+  WorkflowNodeData,
+} from "@/types/workflow";
 import { fromWorkflowDto } from "./serialize";
 
 export type WorkflowState = SerializableWorkflow;
 
-const DEFAULT_PARAMETER_SCHEMA = { type: "object", properties: {}, required: [] };
+const DEFAULT_PARAMETER_SCHEMA = {
+  type: "object",
+  properties: {},
+  required: [],
+};
 
 /** Initial seed: a Start and an End node, ready to connect. */
 const initialState: WorkflowState = {
-  meta: { name: "Untitled workflow", description: "", parameterSchema: DEFAULT_PARAMETER_SCHEMA },
+  meta: {
+    name: "Untitled workflow",
+    description: "",
+    parameterSchema: DEFAULT_PARAMETER_SCHEMA,
+  },
   nodes: [
-    { id: "start", type: "start", position: { x: 300, y: 0 }, data: nodeData("start") },
-    { id: "end", type: "end", position: { x: 300, y: 300 }, data: nodeData("end") },
+    {
+      id: "start",
+      type: "start",
+      position: { x: 300, y: 0 },
+      data: nodeData("start"),
+    },
+    {
+      id: "end",
+      type: "end",
+      position: { x: 300, y: 300 },
+      data: nodeData("end"),
+    },
   ],
   edges: [],
 };
 
 function nodeData(type: string): WorkflowNodeData {
-  const description = type === "start" ? "Workflow entry point" : type === "end" ? "Workflow end" : "";
+  const description =
+    type === "start"
+      ? "Workflow entry point"
+      : type === "end"
+        ? "Workflow end"
+        : "";
   return { description, parameters: {} };
 }
 
@@ -387,7 +462,8 @@ const slice = createSlice({
   },
 });
 
-export const { nodesChanged, edgesChanged, connected, addNode, setWorkflow } = slice.actions;
+export const { nodesChanged, edgesChanged, connected, addNode, setWorkflow } =
+  slice.actions;
 export default slice.reducer;
 ```
 
@@ -417,6 +493,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 4: Store wiring + typed hooks
 
 **Files:**
+
 - Create: `src/store/index.ts`
 - Create: `src/store/hooks.ts`
 
@@ -469,6 +546,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 5: Server persistence route + client service
 
 **Files:**
+
 - Modify: `src/index.ts` (add the `/api/workflow` route to the `routes` object)
 - Create: `src/services/workflow.ts`
 
@@ -554,6 +632,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 6: Start/End node components + registry
 
 **Files:**
+
 - Create: `src/features/workflow/nodes/StartNode.tsx`
 - Create: `src/features/workflow/nodes/EndNode.tsx`
 - Create: `src/features/workflow/nodes/nodeTypes.ts`
@@ -571,7 +650,11 @@ export function StartNode(_props: NodeProps) {
       <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
         Start
       </p>
-      <Handle type="source" position={Position.Bottom} className="!bg-emerald-500" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="bg-emerald-500!"
+      />
     </div>
   );
 }
@@ -587,7 +670,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 export function EndNode(_props: NodeProps) {
   return (
     <div className="rounded-xl border border-rose-300 bg-white px-5 py-3 shadow-sm dark:border-rose-500/40 dark:bg-slate-900">
-      <Handle type="target" position={Position.Top} className="!bg-rose-500" />
+      <Handle type="target" position={Position.Top} className="bg-rose-500!" />
       <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
         End
       </p>
@@ -630,6 +713,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 7: Canvas component
 
 **Files:**
+
 - Create: `src/features/workflow/WorkflowCanvas.tsx`
 
 - [ ] **Step 1: Create the canvas wired to Redux**
@@ -662,8 +746,12 @@ export function WorkflowCanvas() {
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
-        onNodesChange={(changes: NodeChange[]) => dispatch(nodesChanged(changes))}
-        onEdgesChange={(changes: EdgeChange[]) => dispatch(edgesChanged(changes))}
+        onNodesChange={(changes: NodeChange[]) =>
+          dispatch(nodesChanged(changes))
+        }
+        onEdgesChange={(changes: EdgeChange[]) =>
+          dispatch(edgesChanged(changes))
+        }
         onConnect={(connection: Connection) => dispatch(connected(connection))}
         fitView
       >
@@ -695,6 +783,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 8: Toolbar component
 
 **Files:**
+
 - Create: `src/features/workflow/Toolbar.tsx`
 
 - [ ] **Step 1: Create the toolbar**
@@ -741,12 +830,28 @@ export function Toolbar() {
 
   return (
     <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-4 py-2 dark:border-slate-800 dark:bg-slate-900">
-      <span className="mr-2 text-sm font-semibold text-slate-700 dark:text-slate-200">Workflow Builder</span>
-      <button className={btn} onClick={() => dispatch(addNode({ type: "start" }))}>Add Start</button>
-      <button className={btn} onClick={() => dispatch(addNode({ type: "end" }))}>Add End</button>
+      <span className="mr-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+        Workflow Builder
+      </span>
+      <button
+        className={btn}
+        onClick={() => dispatch(addNode({ type: "start" }))}
+      >
+        Add Start
+      </button>
+      <button
+        className={btn}
+        onClick={() => dispatch(addNode({ type: "end" }))}
+      >
+        Add End
+      </button>
       <span className="flex-1" />
-      <span className="mr-2 text-xs text-slate-400 dark:text-slate-500">{status}</span>
-      <button className={btn} onClick={handleLoad}>Load</button>
+      <span className="mr-2 text-xs text-slate-400 dark:text-slate-500">
+        {status}
+      </span>
+      <button className={btn} onClick={handleLoad}>
+        Load
+      </button>
       <button
         className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-700"
         onClick={handleSave}
@@ -777,6 +882,7 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 ### Task 9: Page, app root + Provider, CSS cleanup
 
 **Files:**
+
 - Create: `src/features/workflow/WorkflowBuilderPage.tsx`
 - Create: `src/features/workflow/index.ts`
 - Modify: `src/App.tsx` (replace whole file)
@@ -931,6 +1037,7 @@ Expected: PASS.
 - [ ] **Step 3: Manual smoke test**
 
 Run: `bun dev` and open the printed URL in a browser. Verify:
+
 1. The page shows the toolbar and a canvas with a **Start** node and an **End** node.
 2. Drag a node — it moves.
 3. Drag from the Start node's bottom handle to the End node's top handle — an edge appears.
