@@ -1,4 +1,5 @@
 import { ExpressionInput } from "../components/ExpressionInput";
+import type { NodeOutputs } from "../expression/nodeOutputs";
 import type { ParameterEntry } from "../schema/parameterSchema";
 import { emptyComparison, emptyGroup } from "./jsonLogic";
 import {
@@ -14,7 +15,7 @@ import {
 
 interface BuilderProps {
   group: Group;
-  nodeNames: string[];
+  nodeOutputs: NodeOutputs[];
   parameters: ParameterEntry[];
   onChange: (group: Group) => void;
   onRemove?: () => void;
@@ -23,7 +24,7 @@ interface BuilderProps {
 
 export function ConditionBuilder({
   group,
-  nodeNames,
+  nodeOutputs,
   parameters,
   onChange,
   onRemove,
@@ -83,7 +84,7 @@ export function ConditionBuilder({
             <ConditionBuilder
               key={child.id}
               group={child}
-              nodeNames={nodeNames}
+              nodeOutputs={nodeOutputs}
               parameters={parameters}
               depth={depth + 1}
               onChange={(g) => updateChild(i, g)}
@@ -93,7 +94,7 @@ export function ConditionBuilder({
             <ComparisonRow
               key={child.id}
               comparison={child}
-              nodeNames={nodeNames}
+              nodeOutputs={nodeOutputs}
               parameters={parameters}
               onChange={(c) => updateChild(i, c)}
               onRemove={() => removeChild(i)}
@@ -127,19 +128,19 @@ export function ConditionBuilder({
 
 interface RowProps {
   comparison: Comparison;
-  nodeNames: string[];
+  nodeOutputs: NodeOutputs[];
   parameters: ParameterEntry[];
   onChange: (c: Comparison) => void;
   onRemove: () => void;
 }
 
-function ComparisonRow({ comparison, nodeNames, parameters, onChange, onRemove }: RowProps) {
+function ComparisonRow({ comparison, nodeOutputs, parameters, onChange, onRemove }: RowProps) {
   return (
     <div className="flex items-start gap-1">
       <div className="flex-1">
         <ExpressionInput
           value={comparison.left}
-          nodeNames={nodeNames}
+          nodeOutputs={nodeOutputs}
           parameters={parameters}
           placeholder="$state.age"
           onChange={(left) => onChange({ ...comparison, left })}
@@ -159,7 +160,7 @@ function ComparisonRow({ comparison, nodeNames, parameters, onChange, onRemove }
       <div className="flex-1">
         <ExpressionInput
           value={comparison.right}
-          nodeNames={nodeNames}
+          nodeOutputs={nodeOutputs}
           parameters={parameters}
           placeholder="18"
           onChange={(right) => onChange({ ...comparison, right })}

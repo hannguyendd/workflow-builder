@@ -5,6 +5,8 @@ Client-side data access. Thin `fetch` wrappers around the Bun server's `/api/*` 
 ## Files
 
 - `workflow.ts` — `loadWorkflow()` (GET `/api/workflow`, returns `null` on 404) and `saveWorkflow(dto)` (PUT `/api/workflow`). Both speak the persisted `WorkflowDto`.
+- `agents.ts` — `listAgents()` (GET `/api/agents`) and the pure `toAgentConfig` mapper. Returns `AgentConfig[]` from `@/types/agent`.
+- `agentFixtures.ts` — `AGENT_FIXTURES`, dummy agents (from the chat service's `https/*.http` examples) that the `/api/agents` proxy serves for offline dev while the Taggle backend isn't wired up. Restore live forwarding when the backend is reachable.
 
 ## Conventions
 

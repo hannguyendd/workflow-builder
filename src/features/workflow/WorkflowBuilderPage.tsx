@@ -3,6 +3,7 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { useAppDispatch } from "@/store/hooks";
 import { loadWorkflow } from "@/services/workflow";
 import { setWorkflow } from "./workflowSlice";
+import { loadAgents } from "./agents/agentsSlice";
 import { Toolbar } from "./Toolbar";
 import { WorkflowCanvas } from "./WorkflowCanvas";
 import { Sidebar } from "./Sidebar";
@@ -25,6 +26,10 @@ export function WorkflowBuilderPage() {
       .catch(() => {
         /* no saved workflow yet — keep the seeded Start/End */
       });
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(loadAgents());
   }, [dispatch]);
 
   return (

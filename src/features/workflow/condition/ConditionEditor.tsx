@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { JsonLogicValue } from "../expression/operand";
+import type { NodeOutputs } from "../expression/nodeOutputs";
 import type { ParameterEntry } from "../schema/parameterSchema";
 import { ConditionBuilder } from "./ConditionBuilder";
 import { emptyGroup, jsonLogicToTree, treeToJsonLogic } from "./jsonLogic";
@@ -7,7 +8,7 @@ import type { Group } from "./types";
 
 interface ConditionEditorProps {
   condition: JsonLogicValue;
-  nodeNames: string[];
+  nodeOutputs: NodeOutputs[];
   parameters: ParameterEntry[];
   onChange: (condition: JsonLogicValue) => void;
 }
@@ -34,7 +35,7 @@ function safeParse(text: string): JsonLogicValue {
 const UNSUPPORTED_MSG =
   "This JSON can't be edited in the builder. Wrap conditions in an and/or group of comparisons, or keep editing as JSON.";
 
-export function ConditionEditor({ condition, nodeNames, parameters, onChange }: ConditionEditorProps) {
+export function ConditionEditor({ condition, nodeOutputs, parameters, onChange }: ConditionEditorProps) {
   // Parse once for initial state; the component is remounted via key={nodeId}
   // when the selected node changes (see Inspector).
   const initialTree = useMemo<Group | null>(() => {
@@ -118,7 +119,7 @@ export function ConditionEditor({ condition, nodeNames, parameters, onChange }: 
       {mode === "builder" ? (
         <ConditionBuilder
           group={tree}
-          nodeNames={nodeNames}
+          nodeOutputs={nodeOutputs}
           parameters={parameters}
           onChange={updateTree}
         />

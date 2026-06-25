@@ -11,7 +11,7 @@ import {
 } from "@xyflow/react";
 import type { SerializableWorkflow, WorkflowDto, WorkflowNodeData } from "@/types/workflow";
 import { fromWorkflowDto } from "./serialize";
-import { NodeType, EdgeLabel } from "./constants";
+import { NodeType, EdgeLabel, AgentNodeField } from "./constants";
 import { defaultCondition } from "./condition/jsonLogic";
 import { validateNodeName } from "./nodeName";
 
@@ -23,6 +23,13 @@ function nodeData(type: string): WorkflowNodeData {
   if (type === NodeType.START) return { description: "Workflow entry point", parameters: {} };
   if (type === NodeType.END) return { description: "Workflow end", parameters: {} };
   if (type === NodeType.IF) return { description: "", parameters: { condition: defaultCondition() } };
+  if (type === NodeType.AGENT) {
+    const p = AgentNodeField.AGENT_PARAM;
+    return {
+      description: "",
+      parameters: { [p.AGENT_CONFIGURATION_ID]: "", [p.INPUT]: {}, [p.OUTPUT]: "" },
+    };
+  }
   return { description: "", parameters: {} };
 }
 

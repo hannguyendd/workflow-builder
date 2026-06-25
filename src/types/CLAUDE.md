@@ -7,6 +7,7 @@ Shared TypeScript contracts for the workflow domain. No runtime code — types o
 - `workflow.ts` — the workflow type system, split into two worlds:
   - **Persisted DTOs** (`WorkflowNodeDto`, `WorkflowEdgeDto`, `WorkflowEdgeMap`, `WorkflowDto`) — the JSON shape saved to disk / sent to the backend. Matches the Taggle workflow schema. Edges are stored as a map: `source node name -> outgoing edges`.
   - **In-app shapes** (`WorkflowMeta`, `WorkflowNodeData`, `SerializableWorkflow`) — what the Redux store holds. Nodes/edges are plain `@xyflow/react` `Node`/`Edge`; every node's `data` follows `WorkflowNodeData`.
+- `agent.ts` — `AgentConfig`, the trimmed agent-configuration shape the builder consumes (camelCase; `inputSchema`/`outputSchema` nullable).
 
 ## Conventions
 

@@ -56,6 +56,34 @@ test("toWorkflowDto emits an if node with condition and true/false edges", () =>
   ]);
 });
 
+test("toWorkflowDto emits an agent node with camelCase params verbatim", () => {
+  const wf: SerializableWorkflow = {
+    meta: { name: "wf", description: "", parameterSchema: {} },
+    nodes: [
+      {
+        id: "coach",
+        type: "agent",
+        position: { x: 0, y: 0 },
+        data: {
+          description: "",
+          parameters: {
+            agentConfigurationId: "a1",
+            input: { messages: "$parameters.question" },
+            output: "state.answer",
+          },
+        },
+      },
+    ],
+    edges: [],
+  };
+  const dto = toWorkflowDto(wf);
+  expect(dto.nodes[0]!.parameters).toEqual({
+    agentConfigurationId: "a1",
+    input: { messages: "$parameters.question" },
+    output: "state.answer",
+  });
+});
+
 test("fromWorkflowDto restores an if node condition and labelled edges", () => {
   const condition = defaultCondition();
   const restored = fromWorkflowDto({
